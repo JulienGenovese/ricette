@@ -1,63 +1,100 @@
-from src.rules import MealNutritionRules, DayNutritionRules, DishCombinationRules
+from src.rules import (
+    MealContext, DayContext,
+    NutritionRule, PiattoUnicoRule, DayNutritionRule,
+    MealRuleEngine, DayRuleEngine,
+)
 from src.model import Recipe, DishType
 
 
 def make_recipe(name, protein=False, carb=False, fiber=False):
     r = Recipe(name=name, ingredients="", seasonality="", source1=None, source2=None)
-    # monkeypatching classify result via a dict keyed by recipe; tests will call rules directly
-    r._profile = {"protein": protein, "carb": carb, "fiber": fiber}
-    return r
+    profile = {"protein": protein, "carb": carb, "fiber": fiber}
+    return r, profile
 
 
-class DummyProfiles(dict):
-    def get(self, key, default=None):
-        # key is Recipe
-        return super().get(key, default)
+def _meal_ctx(recipes, profiles, dish_types=None, allow_both=False):
+    if dish_types is None:
+        dish_types = [DishType.PRIMO] * len(recipes)
+    return MealContext(
+        recipes=recipes,
+        profiles=profiles,
+        dish_types=dish_types,
+        allow_both=allow_both,
+    )
 
 
-def test_meal_nutrition_rules_accepts_correct_combination():
-    rules = MealNutritionRules()
-    r1 = make_recipe("A", protein=True, fiber=True)
-    profiles = DummyProfiles({r1: r1._profile})
+def test_nutrition_rule_accepts_correct_combination():
+    rule = NutritionRule()
+    r1, p1 = make_recipe("A", protein=True, fiber=True)
+    profiles = {r1: p1}
 
-    assert rules.is_valid([r1], profiles)
-
-
-def test_meal_nutrition_rules_rejects_missing_fiber():
-    rules = MealNutritionRules()
-    r1 = make_recipe("A", protein=True, fiber=False)
-    profiles = DummyProfiles({r1: r1._profile})
-
-    assert not rules.is_valid([r1], profiles)
+    assert rule.is_valid(_meal_ctx([r1], profiles))
 
 
-def test_meal_nutrition_rules_rejects_both_protein_and_carb():
-    rules = MealNutritionRules()
-    r1 = make_recipe("A", protein=True, carb=True, fiber=True)
-    profiles = DummyProfiles({r1: r1._profile})
+def test_nutrition_rule_rejects_missing_fiber():
+    rule = NutritionRule()
+    r1, p1 = make_recipe("A", protein=True, fiber=False)
+    profiles = {r1: p1}
 
-    assert not rules.is_valid([r1], profiles)
+    assert not rule.is_valid(_meal_ctx([r1], profiles))
 
 
-def test_meal_nutrition_allows_both_if_allowed():
-    rules = MealNutritionRules()
-    r1 = make_recipe("A", protein=True, carb=True, fiber=True)
-    profiles = DummyProfiles({r1: r1._profile})
+def test_nutrition_rule_rejects_both_protein_and_carb():
+    rule = NutritionRule()
+    r1, p1 = make_recipe("A", protein=True, carb=True, fiber=True)
+    profiles = {r1: p1}
 
-    assert rules.is_valid([r1], profiles, allow_both=True)
+    assert not rule.is_valid(_meal_ctx([r1], profiles))
+
+
+def test_nutrition_rule_allows_both_if_allowed():
+    rule = NutritionRule()
+    r1, p1 = make_recipe("A", protein=True, carb=True, fiber=True)
+    profiles = {r1: p1}
+
+    assert rule.is_valid(_meal_ctx([r1], profiles, allow_both=True))
 
 
 def test_day_rule_requires_protein_and_carb():
-    day = DayNutritionRules()
-    r1 = make_recipe("A", protein=True)
-    r2 = make_recipe("B", carb=True)
-    profiles = DummyProfiles({r1: r1._profile, r2: r2._profile})
+    rule = DayNutritionRule()
+    _, p1 = make_recipe("A", protein=True)
+    _, p2 = make_recipe("B", carb=True)
 
-    assert day.is_valid([profiles.get(r1), profiles.get(r2)])
+    ctx = DayContext(meal_profiles=[p1, p2])
+    assert rule.is_valid(ctx)
 
 
-def test_dish_combination_piatti_unici_alone():
-    rules = DishCombinationRules()
-    assert rules.is_valid([DishType.PRIMO])
-    assert rules.is_valid([DishType.PIATTO_UNICO])
-    assert not rules.is_valid([DishType.PIATTO_UNICO, DishType.PRIMO])
+def test_piatto_unico_alone():
+    rule = PiattoUnicoRule()
+
+    ctx_ok = _meal_ctx([], {}, dish_types=[DishType.PIATTO_UNICO])
+    assert rule.is_valid(ctx_ok)
+
+    ctx_ok2 = _meal_ctx([], {}, dish_types=[DishType.PRIMO])
+    assert rule.is_valid(ctx_ok2)
+
+    ctx_bad = _meal_ctx([], {}, dish_types=[DishType.PIATTO_UNICO, DishType.PRIMO])
+    assert not rule.is_valid(ctx_bad)
+
+
+def test_meal_rule_engine_validates_all():
+    engine = MealRuleEngine([NutritionRule(), PiattoUnicoRule()])
+
+    r1, p1 = make_recipe("A", protein=True, fiber=True)
+    profiles = {r1: p1}
+
+    ctx = _meal_ctx([r1], profiles, dish_types=[DishType.PRIMO])
+    assert engine.validate(ctx)
+
+    ctx_bad = _meal_ctx([r1], profiles, dish_types=[DishType.PIATTO_UNICO, DishType.PRIMO])
+    assert not engine.validate(ctx_bad)
+
+
+def test_day_rule_engine_validates_all():
+    engine = DayRuleEngine([DayNutritionRule()])
+
+    ctx = DayContext(meal_profiles=[{"protein": True, "carb": False}, {"protein": False, "carb": True}])
+    assert engine.validate(ctx)
+
+    ctx_bad = DayContext(meal_profiles=[{"protein": True, "carb": False}])
+    assert not engine.validate(ctx_bad)

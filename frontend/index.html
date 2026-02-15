@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuickChef</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="on-landing">
+
+    <!-- ========== Persistent Navbar ========== -->
+    <nav class="main-navbar" id="main-navbar">
+        <button class="navbar-brand" onclick="navigateTo('menu')">QuickChef</button>
+        <div class="navbar-links">
+            <button class="navbar-link" data-page="menu" onclick="navigateTo('menu')">
+                <span class="navbar-link-icon">&#127968;</span> Home
+            </button>
+            <button class="navbar-link" data-page="planner" onclick="navigateTo('planner')">
+                <span class="navbar-link-icon">&#128197;</span> Planner
+            </button>
+            <button class="navbar-link" data-page="manage-recipes" onclick="navigateTo('manage-recipes')">
+                <span class="navbar-link-icon">&#128218;</span> Ricette
+            </button>
+            <button class="navbar-link" data-page="add-recipe" onclick="navigateTo('add-recipe')">
+                <span class="navbar-link-icon">&#10133;</span> Aggiungi
+            </button>
+        </div>
+        <div class="navbar-actions">
+            <button class="btn-theme-toggle" id="btn-theme-toggle" onclick="toggleTheme()" title="Tema chiaro/scuro">
+                &#9790;
+            </button>
+        </div>
+    </nav>
+
+    <!-- ========== PAGE 1: Landing ========== -->
+    <div id="landing" class="landing">
+        <div class="landing-left">
+            <div class="landing-slideshow">
+                <div class="landing-slide active"></div>
+                <div class="landing-slide"></div>
+            </div>
+        </div>
+        <div class="landing-right">
+            <div class="landing-right-content">
+                <h1 class="landing-title">QuickChef</h1>
+                <p class="landing-desc">
+                    Il tuo assistente per creare piani alimentari bilanciati, settimana dopo settimana.
+                </p>
+                <button class="btn-start" onclick="navigateTo('preferences')">Inizia</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== PAGE 1b: Preferences ========== -->
+    <div id="preferences" class="page preferences-page hidden">
+        <!-- Background Slideshow -->
+        <div class="bg-slideshow">
+            <div class="bg-slide active"></div>
+            <div class="bg-slide"></div>
+        </div>
+        <div class="bg-overlay"></div>
+
+        <div class="preferences-container">
+            <div class="pref-progress">
+                <div class="pref-progress-bar" id="pref-progress-bar"></div>
+            </div>
+            <div class="pref-step-label" id="pref-step-label">1 di 4</div>
+
+            <h2 class="preferences-title" id="preferences-title">Quali primi ti piacciono?</h2>
+            <p class="preferences-hint">Seleziona i piatti che preferisci. Appariranno piu' spesso nel tuo piano settimanale.</p>
+
+            <div id="preferences-grid" class="preferences-grid"></div>
+
+            <div class="preferences-actions">
+                <button class="btn-ghost hidden" id="pref-prev" onclick="prefPrev()">Indietro</button>
+                <div class="preferences-actions-spacer"></div>
+                <button class="btn-primary preferences-continue" id="pref-next" onclick="prefNext()">Avanti</button>
+                <button class="btn-ghost" onclick="skipPreferences()">Salta</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== PAGE 2: Menu ========== -->
+    <div id="menu" class="page menu-page hidden">
+        <!-- Background Slideshow -->
+        <div class="bg-slideshow">
+            <div class="bg-slide active"></div>
+            <div class="bg-slide"></div>
+        </div>
+        <div class="bg-overlay"></div>
+
+        <div class="menu-header">
+            <button class="menu-home-btn" onclick="navigateTo('landing')" title="Torna alla home">
+                QuickChef
+            </button>
+            <p class="menu-subtitle">Cosa vuoi fare?</p>
+        </div>
+        <div class="menu-grid">
+            <button class="menu-card" onclick="navigateTo('planner')">
+                <span class="menu-card-icon">&#128197;</span>
+                <span class="menu-card-label">Genera Piano Settimanale</span>
+            </button>
+            <button class="menu-card" onclick="navigateTo('add-recipe')">
+                <span class="menu-card-icon">&#10133;</span>
+                <span class="menu-card-label">Aggiungi Ricetta</span>
+            </button>
+            <button class="menu-card" onclick="navigateTo('manage-recipes')">
+                <span class="menu-card-icon">&#128218;</span>
+                <span class="menu-card-label">Gestisci Ricette</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ========== PAGE 3: Planner ========== -->
+    <div id="planner" class="page planner-page hidden">
+        <!-- Background Slideshow -->
+        <div class="bg-slideshow">
+            <div class="bg-slide active"></div>
+            <div class="bg-slide"></div>
+        </div>
+        <div class="bg-overlay"></div>
+
+        <!-- Controls -->
+        <nav class="controls glass">
+            <div class="controls-inner">
+                <div class="control-group">
+                    <label for="num-people">Persone</label>
+                    <input type="number" id="num-people" min="1" max="20" value="2" onchange="rescaleAndRender()">
+                </div>
+                <div class="control-group">
+                    <label for="season-select">Stagione</label>
+                    <select id="season-select">
+                        <option value="">Auto</option>
+                        <option value="Primavera">Primavera</option>
+                        <option value="Estate">Estate</option>
+                        <option value="Autunno">Autunno</option>
+                        <option value="Inverno">Inverno</option>
+                    </select>
+                </div>
+                <button class="btn-primary" id="btn-generate" onclick="generatePlan()">
+                    Genera Piano
+                </button>
+                <button class="btn-ghost" onclick="resetExclusions()">
+                    Reset Esclusioni
+                </button>
+                <span id="excluded-count" class="excluded-info"></span>
+
+                <button class="btn-view-toggle" id="btn-view-toggle" onclick="toggleCompactView()">
+                    Compatto
+                </button>
+
+                <div class="controls-spacer"></div>
+
+                <!-- Export dropdowns (visible only after plan is generated) -->
+                <div id="export-controls" class="export-controls hidden">
+                    <button class="btn-ghost" onclick="savePlanToStorage()">Salva Piano</button>
+                    <div class="dropdown">
+                        <button class="btn-export" onclick="toggleDropdown('dd-plan')">
+                            Esporta Piano &#9662;
+                        </button>
+                        <div id="dd-plan" class="dropdown-menu">
+                            <button onclick="exportFile('plan','excel'); closeDropdowns()">Excel</button>
+                            <button onclick="exportFile('plan','pdf'); closeDropdowns()">PDF</button>
+                        </div>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn-export" onclick="toggleDropdown('dd-shopping')">
+                            Esporta Spesa &#9662;
+                        </button>
+                        <div id="dd-shopping" class="dropdown-menu">
+                            <button onclick="exportFile('shopping','excel'); closeDropdowns()">Excel</button>
+                            <button onclick="exportFile('shopping','pdf'); closeDropdowns()">PDF</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Skeleton Loading -->
+        <div id="skeleton-loading" class="skeleton-grid hidden">
+            <div class="skeleton-col"><div class="skeleton-header"></div><div class="skeleton-card"></div><div class="skeleton-card"></div></div>
+            <div class="skeleton-col"><div class="skeleton-header"></div><div class="skeleton-card"></div><div class="skeleton-card"></div></div>
+            <div class="skeleton-col"><div class="skeleton-header"></div><div class="skeleton-card"></div><div class="skeleton-card"></div></div>
+            <div class="skeleton-col"><div class="skeleton-header"></div><div class="skeleton-card"></div><div class="skeleton-card"></div></div>
+            <div class="skeleton-col"><div class="skeleton-header"></div><div class="skeleton-card"></div><div class="skeleton-card"></div></div>
+            <div class="skeleton-col"><div class="skeleton-header"></div><div class="skeleton-card"></div><div class="skeleton-card"></div></div>
+            <div class="skeleton-col"><div class="skeleton-header"></div><div class="skeleton-card"></div><div class="skeleton-card"></div></div>
+        </div>
+
+        <!-- Error -->
+        <div id="error" class="error-banner hidden"></div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="empty-state">
+            <div class="empty-state-icon">&#127869;</div>
+            <div class="empty-state-title">Genera il tuo primo piano!</div>
+            <div class="empty-state-desc">Premi "Genera Piano" per creare un piano settimanale bilanciato.</div>
+        </div>
+
+        <!-- Weekly Plan -->
+        <section id="plan-section" class="plan-section hidden">
+            <!-- Mobile day navigation -->
+            <div class="mobile-day-nav" id="mobile-day-nav">
+                <button onclick="mobileSwipePrev()" id="mobile-prev-btn">&#8249;</button>
+                <span class="mobile-day-label" id="mobile-day-label">Lun</span>
+                <button onclick="mobileSwipeNext()" id="mobile-next-btn">&#8250;</button>
+            </div>
+            <div id="plan-grid" class="plan-grid"></div>
+        </section>
+
+        <!-- Shopping List (in-app) -->
+        <div id="shopping-section" class="shopping-section hidden">
+            <button class="shopping-toggle" onclick="toggleShoppingList()">
+                <span class="shopping-toggle-icon" id="shopping-toggle-icon">&#9654;</span>
+                Lista della Spesa
+                <span id="shopping-count"></span>
+            </button>
+            <div class="shopping-list-container" id="shopping-list-container">
+                <div class="shopping-list" id="shopping-list"></div>
+            </div>
+        </div>
+
+        <!-- Saved Plans -->
+        <div id="saved-plans-section" class="saved-plans-section">
+            <button class="shopping-toggle" onclick="toggleSavedPlans()">
+                <span class="shopping-toggle-icon" id="saved-plans-toggle-icon">&#9654;</span>
+                Piani Salvati
+                <span id="saved-plans-count"></span>
+            </button>
+            <div class="shopping-list-container" id="saved-plans-container">
+                <div class="saved-plans-list" id="saved-plans-list"></div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>QuickChef &mdash; Pasti bilanciati, ogni settimana.</p>
+        </footer>
+    </div>
+
+    <!-- ========== PAGE 4: Add Recipe Wizard ========== -->
+    <div id="add-recipe" class="page wizard-page hidden">
+        <!-- Background Slideshow -->
+        <div class="bg-slideshow">
+            <div class="bg-slide active"></div>
+            <div class="bg-slide"></div>
+        </div>
+        <div class="bg-overlay"></div>
+
+        <div class="wizard-container glass">
+            <div class="wizard-topbar">
+                <button class="btn-logo" onclick="navigateTo('menu')" title="Torna al menu">
+                    QuickChef
+                </button>
+                <button class="btn-ghost btn-back-menu" onclick="navigateTo('menu')">
+                    &#8592; Torna al menu
+                </button>
+            </div>
+
+            <!-- Clickable Breadcrumb -->
+            <div class="wizard-breadcrumb" id="wizard-breadcrumb"></div>
+
+            <!-- Progress bar -->
+            <div class="wizard-progress">
+                <div class="wizard-progress-bar" id="wizard-progress-bar"></div>
+            </div>
+            <div class="wizard-step-label" id="wizard-step-label">Step 1 di 6</div>
+
+            <!-- Step 1: Categoria -->
+            <div class="wizard-step" id="wizard-step-1">
+                <h2 class="wizard-title">Che tipo di piatto vuoi aggiungere?</h2>
+                <div class="wizard-chips" id="category-chips">
+                    <button class="wizard-chip" data-value="PRIMI" onclick="selectChip(this, 'category')">Primi</button>
+                    <button class="wizard-chip" data-value="SECONDI" onclick="selectChip(this, 'category')">Secondi</button>
+                    <button class="wizard-chip" data-value="PIATTI UNICI" onclick="selectChip(this, 'category')">Piatti Unici</button>
+                    <button class="wizard-chip" data-value="CONTORNI" onclick="selectChip(this, 'category')">Contorni</button>
+                </div>
+            </div>
+
+            <!-- Step 2: Nome -->
+            <div class="wizard-step hidden" id="wizard-step-2">
+                <h2 class="wizard-title">Come si chiama la ricetta?</h2>
+                <input type="text" class="wizard-input" id="recipe-name-input" placeholder="Es. Pasta al pomodoro" autocomplete="off">
+            </div>
+
+            <!-- Step 3: Ingredienti -->
+            <div class="wizard-step hidden" id="wizard-step-3">
+                <h2 class="wizard-title">Quali sono gli ingredienti?</h2>
+                <p class="wizard-hint">Scrivi gli ingredienti separati da virgola, con quantita' e unita' per 1 persona.<br>Es: 200g pomodori, 80g pasta, 50ml olio</p>
+                <textarea class="wizard-textarea" id="recipe-ingredients-input" rows="5" placeholder="200g pomodori, 80g pasta, 50ml olio..."></textarea>
+            </div>
+
+            <!-- Step 4: Stagionalita' -->
+            <div class="wizard-step hidden" id="wizard-step-4">
+                <h2 class="wizard-title">In che stagione si prepara?</h2>
+                <div class="wizard-chips" id="season-chips">
+                    <button class="wizard-chip" data-value="Primavera" onclick="selectChip(this, 'seasonality')">Primavera</button>
+                    <button class="wizard-chip" data-value="Estate" onclick="selectChip(this, 'seasonality')">Estate</button>
+                    <button class="wizard-chip" data-value="Autunno" onclick="selectChip(this, 'seasonality')">Autunno</button>
+                    <button class="wizard-chip" data-value="Inverno" onclick="selectChip(this, 'seasonality')">Inverno</button>
+                    <button class="wizard-chip" data-value="Tutto l'anno" onclick="selectChip(this, 'seasonality')">Tutto l'anno</button>
+                </div>
+            </div>
+
+            <!-- Step 5: Fonti nutrizionali -->
+            <div class="wizard-step hidden" id="wizard-step-5">
+                <h2 class="wizard-title">Classificazione nutrizionale</h2>
+                <div class="wizard-field-group">
+                    <label class="wizard-label">Fonte principale</label>
+                    <div class="wizard-chips" id="source1-chips">
+                        <button class="wizard-chip" data-value="Proteica" onclick="selectChip(this, 'source1')">Proteica</button>
+                        <button class="wizard-chip" data-value="Glucidica" onclick="selectChip(this, 'source1')">Glucidica</button>
+                        <button class="wizard-chip" data-value="Fibra" onclick="selectChip(this, 'source1')">Fibra</button>
+                    </div>
+                </div>
+                <div class="wizard-field-group">
+                    <label class="wizard-label">Fonte secondaria (opzionale)</label>
+                    <div class="wizard-chips" id="source2-chips">
+                        <button class="wizard-chip" data-value="Proteica" onclick="selectChip(this, 'source2')">Proteica</button>
+                        <button class="wizard-chip" data-value="Glucidica" onclick="selectChip(this, 'source2')">Glucidica</button>
+                        <button class="wizard-chip" data-value="Fibra" onclick="selectChip(this, 'source2')">Fibra</button>
+                        <button class="wizard-chip" data-value="" onclick="selectChip(this, 'source2')">Nessuna</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 6: Riepilogo -->
+            <div class="wizard-step hidden" id="wizard-step-6">
+                <h2 class="wizard-title">Riepilogo</h2>
+                <div class="wizard-summary" id="wizard-summary"></div>
+            </div>
+
+            <!-- Success screen -->
+            <div class="wizard-step hidden" id="wizard-success">
+                <h2 class="wizard-title">Ricetta salvata!</h2>
+                <p class="wizard-hint" id="wizard-success-msg"></p>
+                <div class="wizard-nav">
+                    <button class="btn-primary" onclick="resetWizard()">Aggiungi un'altra ricetta</button>
+                    <button class="btn-ghost" onclick="navigateTo('menu')">Torna al menu</button>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="wizard-nav" id="wizard-nav">
+                <button class="btn-ghost" id="wizard-prev" onclick="wizardPrev()">Indietro</button>
+                <div class="wizard-nav-spacer"></div>
+                <button class="btn-primary" id="wizard-next" onclick="wizardNext()">Avanti</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== PAGE 5: Manage Recipes ========== -->
+    <div id="manage-recipes" class="page manage-page hidden">
+        <!-- Background Slideshow -->
+        <div class="bg-slideshow">
+            <div class="bg-slide active"></div>
+            <div class="bg-slide"></div>
+        </div>
+        <div class="bg-overlay"></div>
+
+        <div class="manage-container">
+            <div class="manage-header">
+                <h1 class="manage-title">Gestisci Ricette</h1>
+                <div class="manage-search">
+                    <span class="manage-search-icon">&#128269;</span>
+                    <input type="text" id="manage-search-input" placeholder="Cerca per nome o ingrediente..." oninput="filterManageRecipes()">
+                </div>
+            </div>
+            <div class="manage-grid" id="manage-grid"></div>
+        </div>
+    </div>
+
+    <!-- ========== Modal Container ========== -->
+    <div id="modal-root"></div>
+
+    <!-- ========== Toast Container ========== -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- ========== Confetti Canvas ========== -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <script type="module" src="/js/app.js"></script>
+</body>
+</html>

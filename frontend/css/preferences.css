@@ -1,0 +1,144 @@
+/* ======================================================
+   Preferences
+   ====================================================== */
+.preferences-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.preferences-container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 600px;
+    padding: 2.5rem;
+    text-align: center;
+    background: rgba(10, 10, 10, 0.65);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+}
+
+.preferences-logo {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+}
+
+.preferences-title {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 0.6rem;
+}
+
+.preferences-hint {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+.pref-progress {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.pref-progress-bar {
+    height: 100%;
+    width: 25%;
+    background: var(--gradient-cta);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+}
+
+.pref-step-label {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.45);
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.preferences-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.8rem;
+    margin-bottom: 2rem;
+}
+
+.preferences-actions-spacer {
+    flex: 1;
+}
+
+.preferences-loading {
+    grid-column: 1 / -1;
+    padding: 3rem;
+}
+
+.pref-card {
+    background: rgba(255, 255, 255, 0.08);
+    border: 2px solid rgba(255, 255, 255, 0.12);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-align: left;
+}
+
+.pref-card:hover {
+    background: rgba(255, 255, 255, 0.14);
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+.pref-card.selected {
+    background: rgba(225, 112, 85, 0.2);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 20px rgba(225, 112, 85, 0.25);
+}
+
+.pref-card-name {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.3rem;
+}
+
+.pref-card .nutrient-badges {
+    gap: 0.2rem;
+}
+
+.pref-card .badge {
+    font-size: 0.6rem;
+    padding: 0.1rem 0.4rem;
+}
+
+.preferences-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    align-items: center;
+}
+
+.preferences-continue {
+    padding: 0.8rem 3rem;
+    font-size: 1.05rem;
+}
+
+.preferences-actions .btn-ghost {
+    color: rgba(255, 255, 255, 0.5);
+    background: transparent;
+}
+
+.preferences-actions .btn-ghost:hover {
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.08);
+}

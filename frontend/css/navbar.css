@@ -1,0 +1,104 @@
+/* ===== Persistent Navbar ===== */
+.main-navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--navbar-height);
+    z-index: 5000;
+    display: flex;
+    align-items: center;
+    padding: 0 1.5rem;
+    background: rgba(22, 33, 62, 0.95);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.navbar-brand {
+    font-size: 1.3rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: var(--gradient-brand);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin-right: 2rem;
+    transition: opacity 0.2s;
+}
+
+.navbar-brand:hover {
+    opacity: 0.75;
+}
+
+.navbar-links {
+    display: flex;
+    gap: 0.3rem;
+    flex: 1;
+}
+
+.navbar-link {
+    padding: 0.4rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
+    background: none;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.navbar-link:hover {
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.navbar-link.active {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.navbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-theme-toggle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.btn-theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+}
+
+/* Pages need top padding for navbar */
+.page {
+    padding-top: var(--navbar-height);
+}
+
+.landing {
+    padding-top: 0;
+}
+
+/* Hide navbar on landing */
+body.on-landing .main-navbar {
+    transform: translateY(-100%);
+    pointer-events: none;
+}

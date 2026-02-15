@@ -1,0 +1,138 @@
+/* ===== Background Slideshow (menu & planner) ===== */
+.bg-slideshow {
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+}
+
+.bg-slide {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    transition: opacity 1.5s ease-in-out;
+}
+
+.bg-slide.active {
+    opacity: 1;
+}
+
+.bg-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(2px);
+}
+
+/* ======================================================
+   Landing — split layout
+   ====================================================== */
+.landing {
+    position: fixed;
+    inset: 0;
+    z-index: 4000;
+    display: flex;
+}
+
+.landing.fade-out {
+    opacity: 0;
+    transform: scale(1.02);
+    pointer-events: none;
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+/* Left: image slideshow */
+.landing-left {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+.landing-slideshow {
+    position: absolute;
+    inset: 0;
+}
+
+.landing-slide {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+}
+
+.landing-slide.active {
+    opacity: 1;
+}
+
+/* Right: branding + CTA */
+.landing-right {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--color-bg-nav), #0d1b2a);
+    position: relative;
+}
+
+.landing-right::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 10%;
+    bottom: 10%;
+    width: 1px;
+    background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.15), transparent);
+}
+
+.landing-right-content {
+    max-width: 420px;
+    padding: 3rem 2.5rem;
+    text-align: center;
+}
+
+.landing-title {
+    font-size: 3.8rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 1rem;
+    letter-spacing: -1.5px;
+    line-height: 1.1;
+    background: var(--gradient-brand);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.landing-desc {
+    font-size: 1.05rem;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.8;
+    margin-bottom: 2.5rem;
+}
+
+.btn-start {
+    padding: 1rem 3.5rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #fff;
+    background: var(--gradient-cta);
+    border: none;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    letter-spacing: 0.5px;
+    box-shadow: 0 8px 30px rgba(214, 48, 49, 0.4);
+}
+
+.btn-start:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(214, 48, 49, 0.5);
+}
+
+.btn-start:active {
+    transform: translateY(0);
+}

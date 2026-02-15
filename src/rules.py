@@ -1,58 +1,147 @@
-from typing import List, Dict
-from src.model import DishType
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from src.model import DishType, Recipe
 
 
-class MealNutritionRules:
-    """Validates a meal according to:
-    - normally: each meal must contain fibra (fiber) and exactly one of proteina (protein) or carboidrato (carb)
-    - optionally (allow_both=True): accept fiber and at least one of protein or carb (used for single-meal days)
+@dataclass
+class MealContext:
+    """Contesto condiviso passato a tutte le regole di un pasto.
+
+    Racchiude le ricette candidate, i loro profili nutrizionali,
+    i tipi di piatto e il flag allow_both (usato per i giorni
+    con un solo pasto, es. Sabato, dove servono sia proteine che carboidrati).
     """
 
-    def is_valid(self, recipes: List, profiles: Dict, allow_both: bool = False) -> bool:
-        if not recipes:
+    recipes: list[Recipe]
+    profiles: dict[Recipe, dict]
+    dish_types: list[DishType]
+    allow_both: bool = False
+
+
+@dataclass
+class DayContext:
+    """Contesto condiviso passato a tutte le regole giornaliere.
+
+    Contiene i profili nutrizionali aggregati di tutti i pasti
+    pianificati in un dato giorno.
+    """
+
+    meal_profiles: list[dict]
+
+
+class MealRule(ABC):
+    """Classe base astratta per le regole di validazione di un singolo pasto.
+
+    Ogni regola concreta riceve un MealContext e restituisce True
+    se il pasto lo rispetta, False altrimenti.
+    Interfaccia uniforme: tutte le regole hanno la stessa firma,
+    cosi' sono intercambiabili (LSP).
+    """
+
+    @abstractmethod
+    def is_valid(self, ctx: MealContext) -> bool: ...
+
+
+class DayRule(ABC):
+    """Classe base astratta per le regole di validazione giornaliera.
+
+    Analoga a MealRule ma opera a livello di giorno intero,
+    ricevendo un DayContext con i profili di tutti i pasti del giorno.
+    """
+
+    @abstractmethod
+    def is_valid(self, ctx: DayContext) -> bool: ...
+
+
+class NutritionRule(MealRule):
+    """Regola nutrizionale: ogni pasto deve contenere fibra
+    e esattamente uno tra proteine o carboidrati.
+
+    Con allow_both=True (giorni a pasto singolo) accetta
+    fibra + almeno uno tra proteine e carboidrati,
+    permettendo che entrambi siano presenti.
+    """
+
+    def is_valid(self, ctx: MealContext) -> bool:
+        if not ctx.recipes:
             return False
 
-        has_fiber = any(profiles.get(r, {}).get("fiber", False) for r in recipes)
-        has_protein = any(profiles.get(r, {}).get("protein", False) for r in recipes)
-        has_carb = any(profiles.get(r, {}).get("carb", False) for r in recipes)
+        has_fiber = any(ctx.profiles.get(r, {}).get("fiber", False) for r in ctx.recipes)
+        has_protein = any(ctx.profiles.get(r, {}).get("protein", False) for r in ctx.recipes)
+        has_carb = any(ctx.profiles.get(r, {}).get("carb", False) for r in ctx.recipes)
 
         if not has_fiber:
             return False
 
-        if allow_both:
+        if ctx.allow_both:
             return has_protein or has_carb
 
-        # must have exactly one of protein or carb (not both)
         return (has_protein and not has_carb) or (has_carb and not has_protein)
 
 
-class DishCombinationRules:
-    """Validates dish-type combinations:
-    - If a PIATTO_UNICO is present, it must be the only dish in the meal
-    - otherwise any combination is allowed
+class PiattoUnicoRule(MealRule):
+    """Regola di compatibilita' dei tipi di piatto.
+
+    Se nel pasto e' presente un PIATTO_UNICO, deve essere
+    l'unico piatto (non puo' essere combinato con primi, secondi, ecc.).
     """
 
-    def is_valid(self, dish_types: List[DishType]) -> bool:
-        if not dish_types:
+    def is_valid(self, ctx: MealContext) -> bool:
+        if not ctx.dish_types:
             return False
 
-        has_piatto_unico = any(dt == DishType.PIATTO_UNICO for dt in dish_types)
-        if has_piatto_unico and len(dish_types) > 1:
+        has_piatto_unico = any(dt == DishType.PIATTO_UNICO for dt in ctx.dish_types)
+        if has_piatto_unico and len(ctx.dish_types) > 1:
             return False
 
         return True
 
 
-class DayNutritionRules:
-    """Validates a day's meals according to:
-    - each day must contain at least one protein and at least one carb among all meals
+class DayNutritionRule(DayRule):
+    """Regola nutrizionale giornaliera.
+
+    Verifica che nell'arco della giornata ci sia almeno un pasto
+    con proteine e almeno un pasto con carboidrati,
+    garantendo una dieta bilanciata.
     """
 
-    def is_valid(self, day_profiles: List[Dict]) -> bool:
-        if not day_profiles:
+    def is_valid(self, ctx: DayContext) -> bool:
+        if not ctx.meal_profiles:
             return False
 
-        has_protein = any(p.get("protein", False) for p in day_profiles)
-        has_carb = any(p.get("carb", False) for p in day_profiles)
+        has_protein = any(p.get("protein", False) for p in ctx.meal_profiles)
+        has_carb = any(p.get("carb", False) for p in ctx.meal_profiles)
 
         return has_protein and has_carb
+
+
+class MealRuleEngine:
+    """Motore che aggrega piu' MealRule e le applica tutte in sequenza.
+
+    Un pasto e' valido solo se tutte le regole registrate
+    restituiscono True. Permette di aggiungere o rimuovere regole
+    senza modificare il codice che le usa.
+    """
+
+    def __init__(self, rules: list[MealRule]):
+        self.rules = rules
+
+    def validate(self, ctx: MealContext) -> bool:
+        """Restituisce True se il pasto rispetta tutte le regole."""
+        return all(rule.is_valid(ctx) for rule in self.rules)
+
+
+class DayRuleEngine:
+    """Motore che aggrega piu' DayRule e le applica tutte in sequenza.
+
+    Analogo a MealRuleEngine ma opera a livello giornaliero.
+    Un giorno e' valido solo se tutte le regole registrate
+    restituiscono True.
+    """
+
+    def __init__(self, rules: list[DayRule]):
+        self.rules = rules
+
+    def validate(self, ctx: DayContext) -> bool:
+        """Restituisce True se il giorno rispetta tutte le regole."""
+        return all(rule.is_valid(ctx) for rule in self.rules)

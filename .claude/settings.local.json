@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pkexec chown:*)",
+      "Bash(python -m pytest:*)",
+      "Bash(python3 -m pytest:*)",
+      "Bash(pip3 show:*)",
+      "Bash(python3.14 -m pytest:*)",
+      "Bash(/home/julien/Documents/python-proj/ricette/.venv/bin/python -m pytest:*)",
+      "Bash(dpkg -l:*)",
+      "Bash(uv run pytest:*)",
+      "Bash(pkexec rm -rf /home/julien/Documents/python-proj/ricette/.venv)",
+      "Bash(ls:*)",
+      "Bash(uv sync:*)",
+      "Bash(curl:*)",
+      "Bash(python3 -m json.tool:*)",
+      "Bash(uv run python3:*)",
+      "Bash(python3.12 -m json.tool:*)",
+      "Bash(pkill:*)",
+      "Bash(python3:*)",
+      "Bash(.venv/bin/python -m pytest:*)",
+      "Bash(/usr/bin/python3:*)",
+      "Bash(uv run:*)",
+      "Bash(sudo rm:*)",
+      "Bash(chmod:*)",
+      "Bash(uv venv:*)",
+      "Bash(VIRTUAL_ENV=/tmp/ricette-venv uv run:*)",
+      "Bash(source:*)",
+      "Bash(uv pip install:*)",
+      "Bash(/tmp/ricette-test/bin/python -m pytest:*)",
+      "Bash(uv python list:*)",
+      "Bash(PYTHONPATH=. python3:*)",
+      "Bash(UV_PROJECT_ENVIRONMENT=/tmp/ricette-venv uv run pytest:*)",
+      "Bash(UV_PROJECT_ENVIRONMENT=/tmp/ricette-venv uv pip install:*)",
+      "Bash(/tmp/ricette-venv/bin/pip install:*)",
+      "Bash(/tmp/ricette-venv/bin/python -m pip:*)",
+      "Bash(python:*)",
+      "Bash(/home/julien/Documents/python-proj/ricette/.venv/bin/python:*)",
+      "Bash(wc:*)"
+    ]
+  }
+}

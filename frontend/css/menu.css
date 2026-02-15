@@ -1,0 +1,118 @@
+/* ======================================================
+   Menu
+   ====================================================== */
+.menu-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.menu-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    z-index: 1;
+}
+
+.menu-home-btn {
+    font-size: 3rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    background: var(--gradient-brand);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin-bottom: 0.5rem;
+    transition: opacity 0.2s;
+}
+
+.menu-home-btn:hover {
+    opacity: 0.75;
+}
+
+.menu-subtitle {
+    font-size: 1.15rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 500;
+}
+
+.menu-grid {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    z-index: 1;
+}
+
+.menu-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 2.5rem 2rem;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-xl);
+    color: #fff;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 220px;
+    height: 190px;
+}
+
+.menu-card:nth-child(1) {
+    border-color: rgba(108, 92, 231, 0.5);
+    background: rgba(108, 92, 231, 0.15);
+}
+
+.menu-card:nth-child(2) {
+    border-color: rgba(225, 112, 85, 0.5);
+    background: rgba(225, 112, 85, 0.15);
+}
+
+.menu-card:nth-child(3) {
+    border-color: rgba(0, 184, 148, 0.5);
+    background: rgba(0, 184, 148, 0.15);
+}
+
+.menu-card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-lg);
+}
+
+.menu-card:nth-child(1):hover {
+    background: rgba(108, 92, 231, 0.25);
+    border-color: rgba(108, 92, 231, 0.6);
+}
+
+.menu-card:nth-child(2):hover {
+    background: rgba(225, 112, 85, 0.25);
+    border-color: rgba(225, 112, 85, 0.6);
+}
+
+.menu-card:nth-child(3):hover {
+    background: rgba(0, 184, 148, 0.25);
+    border-color: rgba(0, 184, 148, 0.6);
+}
+
+.menu-card:active {
+    transform: translateY(-2px);
+}
+
+.menu-card-icon {
+    font-size: 3rem;
+}
+
+.menu-card-label {
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
