@@ -51,5 +51,8 @@ export function navigateTo(pageId) {
 
     if (pageId === "planner") {
         renderSavedPlans();
+        if (window.showTips) window.showTips();
+    } else {
+        if (window.hideTips) window.hideTips();
     }
 }

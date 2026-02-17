@@ -6,6 +6,39 @@ import {
     showToast, updateExcludedCount, launchConfetti, downloadBlob,
 } from "./helpers.js";
 
+/* ===== Helpers ===== */
+
+function getVisibleDays() {
+    if (!state.lastPlanData) return DAYS_ORDER;
+    return DAYS_ORDER.filter(d => state.lastPlanData.plan[d]);
+}
+
+function recalcShoppingList() {
+    if (!state.lastPlanData) return;
+    const plan = state.lastPlanData.plan;
+    const map = new Map();
+
+    for (const dayData of Object.values(plan)) {
+        if (!dayData.meals) continue;
+        for (const mealData of Object.values(dayData.meals)) {
+            if (!mealData.recipes) continue;
+            for (const recipe of mealData.recipes) {
+                if (!recipe.ingredients) continue;
+                for (const ing of recipe.ingredients) {
+                    const key = `${ing.name}||${ing.unit || ""}`;
+                    if (map.has(key)) {
+                        map.get(key).quantity = (map.get(key).quantity || 0) + (ing.quantity || 0);
+                    } else {
+                        map.set(key, { name: ing.name, quantity: ing.quantity || 0, unit: ing.unit || "" });
+                    }
+                }
+            }
+        }
+    }
+
+    state.lastPlanData.shopping_list = [...map.values()];
+}
+
 /* ===== Plan Generation ===== */
 
 export async function generatePlan() {
@@ -71,6 +104,61 @@ export async function removeRecipe(day, meal, name) {
     }
 }
 
+export function removeDay(day) {
+    if (!state.lastPlanData || !state.lastPlanData.plan[day]) return;
+
+    const grid = document.getElementById("plan-grid");
+    const col = grid.querySelector(`.day-column[data-day="${day}"]`);
+    if (col) {
+        col.classList.add("fade-out-day");
+        setTimeout(() => {
+            delete state.lastPlanData.plan[day];
+            recalcShoppingList();
+
+            const visibleDays = getVisibleDays();
+            if (visibleDays.length === 0) {
+                document.getElementById("plan-section").classList.add("hidden");
+                document.getElementById("export-controls").classList.add("hidden");
+                document.getElementById("empty-state").classList.remove("hidden");
+                document.getElementById("shopping-section").classList.add("hidden");
+            } else {
+                if (state.mobileDayIndex >= visibleDays.length) {
+                    state.mobileDayIndex = visibleDays.length - 1;
+                }
+                rescaleAndRender();
+                renderShoppingList();
+            }
+            showToast(`${day} rimosso dal piano`, "info");
+        }, 300);
+    }
+}
+
+export function removeMeal(day, meal) {
+    if (!state.lastPlanData || !state.lastPlanData.plan[day]) return;
+    const dayData = state.lastPlanData.plan[day];
+    if (!dayData.meals || !dayData.meals[meal]) return;
+
+    const grid = document.getElementById("plan-grid");
+    const col = grid.querySelector(`.day-column[data-day="${day}"]`);
+    if (col) {
+        const blocks = col.querySelectorAll(".meal-block");
+        for (const block of blocks) {
+            if (block.querySelector(".meal-label-text")?.textContent === meal) {
+                block.classList.add("fade-out-meal");
+                break;
+            }
+        }
+    }
+
+    setTimeout(() => {
+        dayData.meals[meal].recipes = [];
+        recalcShoppingList();
+        rescaleAndRender();
+        renderShoppingList();
+        showToast(`${meal} di ${day} rimosso`, "info");
+    }, 300);
+}
+
 export function resetExclusions() {
     state.excludedRecipes.clear();
     updateExcludedCount();
@@ -118,7 +206,8 @@ export function mobileSwipePrev() {
 }
 
 export function mobileSwipeNext() {
-    if (state.mobileDayIndex < DAYS_ORDER.length - 1) {
+    const visibleDays = getVisibleDays();
+    if (state.mobileDayIndex < visibleDays.length - 1) {
         state.mobileDayIndex++;
         scrollToMobileDay();
     }
@@ -134,9 +223,68 @@ function scrollToMobileDay() {
 }
 
 function updateMobileDayNav() {
-    document.getElementById("mobile-day-label").textContent = DAYS_ORDER[state.mobileDayIndex];
+    const visibleDays = getVisibleDays();
+    document.getElementById("mobile-day-label").textContent = visibleDays[state.mobileDayIndex] || "";
     document.getElementById("mobile-prev-btn").disabled = state.mobileDayIndex === 0;
-    document.getElementById("mobile-next-btn").disabled = state.mobileDayIndex === DAYS_ORDER.length - 1;
+    document.getElementById("mobile-next-btn").disabled = state.mobileDayIndex >= visibleDays.length - 1;
+}
+
+/* ===== Meal Swap (Drag & Drop) ===== */
+
+function swapMeals(fromDay, fromMeal, toDay, toMeal) {
+    if (fromDay === toDay && fromMeal === toMeal) return;
+    const plan = state.lastPlanData.plan;
+    const temp = plan[fromDay].meals[fromMeal];
+    plan[fromDay].meals[fromMeal] = plan[toDay].meals[toMeal];
+    plan[toDay].meals[toMeal] = temp;
+    rescaleAndRender();
+    showToast("Pasti scambiati!", "success");
+}
+
+function setupMealDrag(block, day, meal) {
+    if (window.innerWidth <= 768) return;
+
+    block.draggable = true;
+    block.dataset.day = day;
+    block.dataset.meal = meal;
+
+    block.addEventListener("dragstart", (e) => {
+        block.classList.add("dragging");
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", JSON.stringify({ day, meal }));
+    });
+
+    block.addEventListener("dragend", () => {
+        block.classList.remove("dragging");
+        document.querySelectorAll(".meal-block.drag-over").forEach(
+            (el) => el.classList.remove("drag-over")
+        );
+    });
+
+    block.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+    });
+
+    block.addEventListener("dragenter", (e) => {
+        e.preventDefault();
+        block.classList.add("drag-over");
+    });
+
+    block.addEventListener("dragleave", (e) => {
+        if (!block.contains(e.relatedTarget)) {
+            block.classList.remove("drag-over");
+        }
+    });
+
+    block.addEventListener("drop", (e) => {
+        e.preventDefault();
+        block.classList.remove("drag-over");
+        try {
+            const from = JSON.parse(e.dataTransfer.getData("text/plain"));
+            swapMeals(from.day, from.meal, day, meal);
+        } catch { /* ignore invalid drag data */ }
+    });
 }
 
 /* ===== Rendering ===== */
@@ -145,27 +293,63 @@ function renderPlan(plan, numPeople) {
     const grid = document.getElementById("plan-grid");
     grid.innerHTML = "";
 
+    const visibleDays = getVisibleDays();
+    grid.style.setProperty("--day-count", visibleDays.length);
+
     for (const day of DAYS_ORDER) {
         const dayData = plan[day];
         if (!dayData) continue;
 
         const col = document.createElement("div");
         col.className = "day-column glass";
+        col.dataset.day = day;
 
         const header = document.createElement("div");
         header.className = "day-header";
-        header.textContent = day;
+
+        const headerLabel = document.createElement("span");
+        headerLabel.textContent = day;
+        header.appendChild(headerLabel);
+
+        const removeDayBtn = document.createElement("button");
+        removeDayBtn.className = "btn-remove-day";
+        removeDayBtn.innerHTML = "&times;";
+        removeDayBtn.title = `Rimuovi ${day}`;
+        removeDayBtn.onclick = (e) => {
+            e.stopPropagation();
+            removeDay(day);
+        };
+        header.appendChild(removeDayBtn);
+
         col.appendChild(header);
 
         for (const meal of MEALS_ORDER) {
             const mealData = dayData.meals ? dayData.meals[meal] : null;
+            const hasRecipes = mealData && mealData.recipes && mealData.recipes.length > 0;
 
             const block = document.createElement("div");
             block.className = "meal-block";
 
             const label = document.createElement("div");
             label.className = "meal-label";
-            label.textContent = meal;
+
+            const labelText = document.createElement("span");
+            labelText.className = "meal-label-text";
+            labelText.textContent = meal;
+            label.appendChild(labelText);
+
+            if (hasRecipes) {
+                const removeMealBtn = document.createElement("button");
+                removeMealBtn.className = "btn-remove-meal";
+                removeMealBtn.innerHTML = "&times;";
+                removeMealBtn.title = `Rimuovi ${meal}`;
+                removeMealBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    removeMeal(day, meal);
+                };
+                label.appendChild(removeMealBtn);
+            }
+
             block.appendChild(label);
 
             if (mealData && mealData.recipes && mealData.recipes.length > 0) {
@@ -179,6 +363,7 @@ function renderPlan(plan, numPeople) {
                 block.appendChild(empty);
             }
 
+            setupMealDrag(block, day, meal);
             col.appendChild(block);
         }
 

@@ -36,7 +36,16 @@
       "Bash(/tmp/ricette-venv/bin/python -m pip:*)",
       "Bash(python:*)",
       "Bash(/home/julien/Documents/python-proj/ricette/.venv/bin/python:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(docker build:*)",
+      "Bash(node --check:*)",
+      "Bash(echo:*)",
+      "Bash(UV_PROJECT_ENVIRONMENT=/home/julien/Documents/python-proj/ricette/.venv2 uv venv:*)",
+      "Bash(UV_PROJECT_ENVIRONMENT=/home/julien/Documents/python-proj/ricette/.venv2 uv sync:*)",
+      "Bash(UV_PROJECT_ENVIRONMENT=/home/julien/Documents/python-proj/ricette/.venv2 uv run pytest:*)",
+      "Bash(UV_PROJECT_ENVIRONMENT=/home/julien/Documents/python-proj/ricette/.venv2 uv run python:*)",
+      "Bash(sudo chown:*)",
+      "Bash(git stash:*)"
     ]
   }
 }

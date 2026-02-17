@@ -1,0 +1,10 @@
+.venv/
+.venv2/
+.venv.bak/
+.git/
+__pycache__/
+*.pyc
+notebooks/
+test/
+.pytest_cache/
+.devcontainer/

@@ -149,6 +149,22 @@
 
     .controls {
         top: 0;
+        padding: 0.8rem 1rem;
+    }
+
+    /* Planner controls: stack on mobile */
+    .controls-inner {
+        gap: 0.6rem;
+    }
+
+    .controls-spacer {
+        flex: none;
+        width: 100%;
+    }
+
+    .export-controls {
+        width: 100%;
+        justify-content: center;
     }
 
     /* Preferences responsive */
@@ -156,11 +172,86 @@
         padding: 1.5rem;
     }
 
+    /* Wizard responsive */
+    .wizard-container {
+        margin: 1rem;
+        padding: 1.5rem;
+    }
+
+    .wizard-title {
+        font-size: 1.1rem;
+    }
+
+    .btn-back-menu {
+        display: none;
+    }
+
+    /* Manage recipes: fit on small screens */
+    .manage-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .manage-container {
+        padding: 1.5rem 1rem;
+    }
+
+    .manage-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .manage-search {
+        max-width: none;
+    }
+
     /* Toast responsive */
     .toast-container {
         bottom: calc(var(--navbar-height) + 1rem);
         right: 1rem;
         left: 1rem;
+    }
+
+    .toast {
+        max-width: none;
+    }
+
+    /* Plan section padding */
+    .plan-section {
+        padding: 1rem;
+    }
+
+    /* Shopping / saved plans padding */
+    .shopping-section,
+    .saved-plans-section {
+        padding: 0 1rem 1.5rem;
+    }
+
+    /* Tutorial: tooltip fixed above bottom navbar */
+    .tutorial-tooltip {
+        width: calc(100vw - 2rem);
+        max-width: none;
+        left: 1rem !important;
+        right: 1rem !important;
+        bottom: calc(var(--navbar-height) + 1rem) !important;
+        top: auto !important;
+        position: fixed !important;
+    }
+
+    .tutorial-tooltip.tutorial-floating {
+        top: 50% !important;
+        left: 50% !important;
+        bottom: auto !important;
+        right: auto !important;
+        width: calc(100vw - 2rem);
+        transform: translate(-50%, -50%) !important;
+    }
+
+    /* Tips widget above bottom navbar, full width */
+    .tips-widget {
+        bottom: calc(var(--navbar-height) + 1rem);
+        right: 1rem;
+        left: 1rem;
+        width: auto;
     }
 }
 
@@ -175,11 +266,102 @@
 }
 
 @media (max-width: 480px) {
+    .tutorial-tooltip {
+        padding: 1.2rem;
+    }
+
+    .tutorial-tooltip-title {
+        font-size: 0.95rem;
+    }
+
+    .tutorial-tooltip-text {
+        font-size: 0.85rem;
+    }
+
     .landing-title {
         font-size: 2rem;
     }
 
+    .landing-right-content {
+        padding: 2rem 1.5rem;
+    }
+
+    .btn-start {
+        padding: 0.8rem 2.5rem;
+        font-size: 1rem;
+    }
+
     .preferences-grid {
         grid-template-columns: 1fr;
+    }
+
+    .preferences-container {
+        padding: 1.2rem;
+        margin: 0 0.5rem;
+    }
+
+    .preferences-title {
+        font-size: 1.4rem;
+    }
+
+    /* Menu cards full width */
+    .menu-card {
+        width: 100%;
+        max-width: 280px;
+        height: auto;
+        min-height: 140px;
+        padding: 1.5rem;
+    }
+
+    .menu-grid {
+        gap: 1rem;
+        padding: 0 1rem;
+        width: 100%;
+    }
+
+    .menu-home-btn {
+        font-size: 2.2rem;
+    }
+
+    /* Wizard chips wrap nicely */
+    .wizard-chip {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+    }
+
+    .wizard-container {
+        margin: 0.5rem;
+        padding: 1.2rem;
+    }
+
+    /* Controls: smaller buttons */
+    .btn-primary {
+        padding: 0.5rem 1.2rem;
+        font-size: 0.85rem;
+    }
+
+    .btn-ghost {
+        padding: 0.5rem 1rem;
+        font-size: 0.82rem;
+    }
+
+    .btn-export {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.78rem;
+    }
+
+    .control-group label {
+        font-size: 0.8rem;
+    }
+
+    .control-group input[type="number"] {
+        width: 55px;
+        padding: 0.4rem;
+        font-size: 0.9rem;
+    }
+
+    .control-group select {
+        padding: 0.4rem;
+        font-size: 0.9rem;
     }
 }

@@ -15,8 +15,11 @@ import { renderWizardBreadcrumb, selectChip, wizardNext, wizardPrev, resetWizard
 import { generatePlan, rescaleAndRender, resetExclusions, toggleCompactView,
          mobileSwipePrev, mobileSwipeNext, toggleShoppingList, toggleSavedPlans,
          savePlanToStorage, exportFile, toggleDropdown, closeDropdowns,
-         renderSavedPlans, renderShoppingList, setupMobileSwipe } from "./planner.js";
+         renderSavedPlans, renderShoppingList, setupMobileSwipe,
+         removeDay, removeMeal } from "./planner.js";
 import { toggleTheme } from "./theme.js";
+import { shouldShowTutorial, startTutorial, skipTutorial, nextStep as tutorialNext, prevStep as tutorialPrev } from "./tutorial.js";
+import { initTips, showTips, hideTips, dismissTips, nextTip, prevTip } from "./tips.js";
 
 // Attach to window for inline onclick handlers
 Object.assign(window, {
@@ -26,7 +29,9 @@ Object.assign(window, {
     toggleDropdown, closeDropdowns, selectChip, wizardNext, wizardPrev,
     resetWizard, filterManageRecipes, openEditModal, openDeleteModal,
     confirmDelete, confirmEdit, closeModal, skipPreferences, prefNext, prefPrev,
-    renderShoppingList,
+    renderShoppingList, removeDay, removeMeal,
+    startTutorial, skipTutorial, tutorialNext, tutorialPrev,
+    showTips, hideTips, dismissTips, nextTip, prevTip,
 });
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -38,4 +43,9 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener("resize", () => {
         if (state.lastPlanData) setupMobileSwipe();
     });
+
+    // Auto-start tutorial on first visit
+    if (shouldShowTutorial()) {
+        setTimeout(() => startTutorial(), 800);
+    }
 });
