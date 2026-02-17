@@ -43,16 +43,17 @@ class TestRecipeRepositoryUserFiles:
     """Verifica che load_recipes() identifichi correttamente i file utente."""
 
     def test_load_recipes_returns_tuple(self, tmp_path):
-        """load_recipes deve ritornare (dict, set)."""
+        """load_recipes deve ritornare (dict, set, dict)."""
         from src.excel import RecipeRepository
         repo = RecipeRepository(tmp_path)
         result = repo.load_recipes()
 
         assert isinstance(result, tuple)
-        assert len(result) == 2
-        recipes, user_names = result
+        assert len(result) == 3
+        recipes, user_names, recipe_sources = result
         assert isinstance(recipes, dict)
         assert isinstance(user_names, set)
+        assert isinstance(recipe_sources, dict)
 
     def test_user_file_names_detected(self, tmp_path):
         """Ricette da file *_ricette_utente.xlsx devono finire nel set."""
@@ -70,7 +71,7 @@ class TestRecipeRepositoryUserFiles:
 
         from src.excel import RecipeRepository
         repo = RecipeRepository(tmp_path)
-        _, user_names = repo.load_recipes()
+        _, user_names, _ = repo.load_recipes()
 
         assert "Pasta utente" in user_names
 
@@ -89,7 +90,7 @@ class TestRecipeRepositoryUserFiles:
 
         from src.excel import RecipeRepository
         repo = RecipeRepository(tmp_path)
-        _, user_names = repo.load_recipes()
+        _, user_names, _ = repo.load_recipes()
 
         assert "Pasta base" not in user_names
 
@@ -274,10 +275,10 @@ class TestRecipeServiceWeights:
 
         featured = service.get_featured_recipes(n=3)
 
-        # Le ricette in vetrina devono aver ricevuto il boost
+        # Le ricette in vetrina non devono modificare i pesi (side-effect rimosso)
         featured_names = {r["name"] for r in featured}
         for name in featured_names:
-            assert service._weights[name] == pytest.approx(1.0 + service.FEATURED_BOOST)
+            assert service._weights[name] == 1.0
 
     def test_featured_recipes_returns_correct_format(self, service, tmp_path):
         """get_featured_recipes() deve ritornare il formato corretto."""
@@ -303,8 +304,8 @@ class TestRecipeServiceWeights:
         assert "nutrients" in item
         assert isinstance(item["nutrients"], list)
 
-    def test_featured_boost_is_cumulative(self, service, tmp_path):
-        """Chiamate multiple a get_featured_recipes() devono accumulare il boost."""
+    def test_featured_does_not_modify_weights(self, service, tmp_path):
+        """get_featured_recipes() non deve modificare i pesi (nessun side-effect)."""
         import openpyxl
 
         wb = openpyxl.Workbook()
@@ -312,7 +313,6 @@ class TestRecipeServiceWeights:
         for cat in ["PRIMI", "SECONDI", "PIATTI UNICI", "CONTORNI"]:
             ws = wb.create_sheet(cat)
             ws.append(["RICETTA", "INGREDIENTI", "STAGIONALITA", "FONTE", "FONTE 2"])
-        # Una sola ricetta, così è sempre selezionata
         wb["PRIMI"].append(["Unica", "100g pasta", "Tutto l'anno", "Glucidica", "Fibra"])
         wb.save(tmp_path / "base.xlsx")
 
@@ -322,8 +322,7 @@ class TestRecipeServiceWeights:
         service.get_featured_recipes(n=1)
         service.get_featured_recipes(n=1)
 
-        expected = 1.0 + 2 * service.FEATURED_BOOST
-        assert service._weights["Unica"] == pytest.approx(expected)
+        assert service._weights["Unica"] == 1.0
 
     def test_featured_respects_n_limit(self, service, tmp_path):
         """get_featured_recipes(n) non deve ritornare più di n ricette."""

@@ -2,7 +2,7 @@ import { startSlideshow, stopSlideshow } from "./theme.js";
 import { loadManageRecipes, loadPreferenceRecipes } from "./recipes.js";
 import { renderSavedPlans } from "./planner.js";
 
-const PAGES = ["landing", "preferences", "menu", "planner", "add-recipe", "manage-recipes"];
+const PAGES = ["landing", "auth", "preferences", "menu", "planner", "add-recipe", "manage-recipes"];
 
 export function navigateTo(pageId) {
     if (pageId === "landing") {

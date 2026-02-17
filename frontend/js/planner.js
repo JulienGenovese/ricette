@@ -1,4 +1,4 @@
-import { DAYS_ORDER, MEALS_ORDER } from "./constants.js";
+import { DAYS_ORDER, MEALS_ORDER, SHOPPING_CATEGORIES, SHOPPING_CATEGORY_DEFAULT } from "./constants.js";
 import { state } from "./state.js";
 import { API } from "./api.js";
 import {
@@ -39,6 +39,57 @@ function recalcShoppingList() {
     state.lastPlanData.shopping_list = [...map.values()];
 }
 
+/* ===== Recipe Files Selection ===== */
+
+export async function loadRecipeFiles() {
+    const files = await API.recipeFiles();
+    const dropdown = document.getElementById("recipe-files-dropdown");
+    if (!dropdown || files.length === 0) return;
+
+    dropdown.innerHTML = "";
+    for (const file of files) {
+        const label = document.createElement("label");
+        label.className = "recipe-files-option";
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.value = file;
+        cb.checked = true;
+        cb.onchange = updateRecipeFilesLabel;
+        const span = document.createElement("span");
+        span.textContent = file.replace(/\.xlsx$/i, "");
+        label.appendChild(cb);
+        label.appendChild(span);
+        dropdown.appendChild(label);
+    }
+    updateRecipeFilesLabel();
+}
+
+function updateRecipeFilesLabel() {
+    const checkboxes = document.querySelectorAll("#recipe-files-dropdown input[type=checkbox]");
+    const checked = [...checkboxes].filter(cb => cb.checked);
+    const labelEl = document.getElementById("recipe-files-label");
+
+    if (checked.length === 0 || checked.length === checkboxes.length) {
+        labelEl.textContent = "Tutti";
+    } else if (checked.length === 1) {
+        labelEl.textContent = checked[0].value.replace(/\.xlsx$/i, "");
+    } else {
+        labelEl.textContent = `${checked.length} selezionati`;
+    }
+}
+
+export function getSelectedRecipeFiles() {
+    const checkboxes = document.querySelectorAll("#recipe-files-dropdown input[type=checkbox]");
+    const checked = [...checkboxes].filter(cb => cb.checked);
+    if (checked.length === 0 || checked.length === checkboxes.length) return null;
+    return checked.map(cb => cb.value);
+}
+
+export function toggleRecipeFilesDropdown() {
+    const dropdown = document.getElementById("recipe-files-dropdown");
+    dropdown.classList.toggle("open");
+}
+
 /* ===== Plan Generation ===== */
 
 export async function generatePlan() {
@@ -46,9 +97,10 @@ export async function generatePlan() {
     hideError();
 
     const season = document.getElementById("season-select").value || null;
+    const recipeFiles = getSelectedRecipeFiles();
 
     try {
-        state.lastPlanData = await API.generate(state.excludedRecipes, season);
+        state.lastPlanData = await API.generate(state.excludedRecipes, season, recipeFiles);
         rescaleAndRender();
         updateExcludedCount();
 
@@ -287,6 +339,63 @@ function setupMealDrag(block, day, meal) {
     });
 }
 
+/* ===== Recipe Detail Modal ===== */
+
+export function openRecipeDetailModal(recipe, numPeople) {
+    const root = document.getElementById("modal-root");
+
+    let ingredientsHtml = "";
+    if (recipe.ingredients && recipe.ingredients.length > 0) {
+        const items = recipe.ingredients.map((ing) => {
+            const scaledQty = ing.quantity ? ing.quantity * numPeople : null;
+            const unit = ing.unit || "";
+            if (scaledQty) {
+                return `<li><span class="detail-ing-qty">${formatQty(scaledQty)}${unit}</span> ${escapeHtml(ing.name)}</li>`;
+            }
+            return `<li>${escapeHtml(ing.name)}</li>`;
+        });
+        ingredientsHtml = `<ul class="detail-ingredients-list">${items.join("")}</ul>`;
+    } else {
+        ingredientsHtml = `<p class="detail-no-ingredients">Nessun ingrediente disponibile</p>`;
+    }
+
+    let nutrientBadgesHtml = "";
+    if (recipe.nutrients && recipe.nutrients.length > 0) {
+        nutrientBadgesHtml = `<div class="nutrient-badges detail-badges">
+            ${recipe.nutrients.map((n) => `<span class="badge badge-${n}">${escapeHtml(n)}</span>`).join("")}
+        </div>`;
+    }
+
+    const dishTypeHtml = recipe.dish_type
+        ? `<span class="detail-dish-type">${escapeHtml(recipe.dish_type)}</span>`
+        : "";
+
+    root.innerHTML = `
+        <div class="modal-overlay" onclick="closeRecipeDetailModal(event)">
+            <div class="modal recipe-detail-modal" onclick="event.stopPropagation()">
+                <button class="detail-close-btn" onclick="closeRecipeDetailModal()">&times;</button>
+                <div class="detail-header">
+                    <div class="modal-title">${escapeHtml(recipe.name)}</div>
+                    <div class="detail-meta">
+                        ${dishTypeHtml}
+                        ${numPeople > 1 ? `<span class="detail-portions">x${numPeople} persone</span>` : ""}
+                    </div>
+                </div>
+                ${nutrientBadgesHtml}
+                <div class="detail-section">
+                    <div class="detail-section-label">Ingredienti</div>
+                    ${ingredientsHtml}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+export function closeRecipeDetailModal(event) {
+    if (event && event.target !== event.currentTarget) return;
+    document.getElementById("modal-root").innerHTML = "";
+}
+
 /* ===== Rendering ===== */
 
 function renderPlan(plan, numPeople) {
@@ -382,6 +491,22 @@ function createRecipeCard(recipe, numPeople, day, meal) {
         card.dataset.nutrient = recipe.nutrients[0];
     }
 
+    // Feature 2: click card to open detail modal
+    card.style.cursor = "pointer";
+    card.onclick = (e) => {
+        if (e.target.closest(".btn-remove") || e.target.closest(".portions-badge")) return;
+        openRecipeDetailModal(recipe, numPeople);
+    };
+
+    // Feature 10: portions badge
+    if (numPeople > 1) {
+        const portionsBadge = document.createElement("span");
+        portionsBadge.className = "portions-badge";
+        portionsBadge.textContent = `x${numPeople}`;
+        portionsBadge.title = `${numPeople} persone`;
+        card.appendChild(portionsBadge);
+    }
+
     const name = document.createElement("div");
     name.className = "recipe-name";
     name.textContent = recipe.name;
@@ -429,6 +554,39 @@ function createRecipeCard(recipe, numPeople, day, meal) {
 
 /* ===== Shopping List ===== */
 
+function categorizeIngredient(name) {
+    const lower = name.toLowerCase();
+    for (const cat of SHOPPING_CATEGORIES) {
+        if (cat.keywords.some((kw) => lower.includes(kw))) {
+            return cat.label;
+        }
+    }
+    return SHOPPING_CATEGORY_DEFAULT;
+}
+
+function persistShoppingChecked() {
+    localStorage.setItem(
+        "quickchef-shopping-checked",
+        JSON.stringify([...state.shoppingChecked])
+    );
+}
+
+function updateShoppingProgress() {
+    const fill = document.querySelector(".shopping-progress-fill");
+    const label = document.querySelector(".shopping-progress-label");
+    if (!fill || !label || !state.lastPlanData) return;
+
+    const totalCount = state.lastPlanData.shopping_list.length;
+    let checkedCount = 0;
+    for (const item of state.lastPlanData.shopping_list) {
+        const key = `${item.name}||${item.unit || ""}`;
+        if (state.shoppingChecked.has(key)) checkedCount++;
+    }
+
+    fill.style.width = `${totalCount > 0 ? (checkedCount / totalCount) * 100 : 0}%`;
+    label.textContent = `${checkedCount}/${totalCount} acquistati`;
+}
+
 export function renderShoppingList() {
     if (!state.lastPlanData || !state.lastPlanData.shopping_list) return;
 
@@ -436,31 +594,101 @@ export function renderShoppingList() {
     const list = document.getElementById("shopping-list");
     list.innerHTML = "";
 
-    const items = [...state.lastPlanData.shopping_list].sort((a, b) => a.name.localeCompare(b.name));
-    document.getElementById("shopping-count").textContent = `(${items.length})`;
+    const items = [...state.lastPlanData.shopping_list].sort((a, b) =>
+        a.name.localeCompare(b.name)
+    );
+    const totalCount = items.length;
 
+    // Group items by category
+    const groups = new Map();
     for (const item of items) {
-        const div = document.createElement("div");
-        div.className = "shopping-item";
+        const category = categorizeIngredient(item.name);
+        if (!groups.has(category)) groups.set(category, []);
+        groups.get(category).push(item);
+    }
 
-        const cb = document.createElement("input");
-        cb.type = "checkbox";
-        cb.onchange = () => div.classList.toggle("checked", cb.checked);
+    // Order groups: follow SHOPPING_CATEGORIES order, then "Altro" at end
+    const orderedCategories = SHOPPING_CATEGORIES.map((c) => c.label).filter(
+        (label) => groups.has(label)
+    );
+    if (groups.has(SHOPPING_CATEGORY_DEFAULT)) {
+        orderedCategories.push(SHOPPING_CATEGORY_DEFAULT);
+    }
 
-        const text = document.createElement("span");
-        text.className = "shopping-item-text";
-        const scaledQty = item.quantity ? item.quantity * numPeople : null;
-        if (scaledQty) {
-            const unit = item.unit || "";
-            text.innerHTML = `<span class="shopping-item-qty">${formatQty(scaledQty)}${unit}</span> ${escapeHtml(item.name)}`;
-        } else {
-            text.textContent = item.name;
+    // Count already checked
+    let checkedCount = 0;
+    for (const item of items) {
+        const key = `${item.name}||${item.unit || ""}`;
+        if (state.shoppingChecked.has(key)) checkedCount++;
+    }
+
+    // Progress bar
+    const progressContainer = document.createElement("div");
+    progressContainer.className = "shopping-progress";
+    progressContainer.innerHTML = `
+        <div class="shopping-progress-bar">
+            <div class="shopping-progress-fill" style="width: ${totalCount > 0 ? (checkedCount / totalCount) * 100 : 0}%"></div>
+        </div>
+        <span class="shopping-progress-label">${checkedCount}/${totalCount} acquistati</span>
+    `;
+    list.appendChild(progressContainer);
+
+    // Render groups
+    for (const category of orderedCategories) {
+        const groupItems = groups.get(category);
+
+        const groupDiv = document.createElement("div");
+        groupDiv.className = "shopping-group";
+
+        const groupHeader = document.createElement("div");
+        groupHeader.className = "shopping-group-header";
+        groupHeader.textContent = category;
+        groupDiv.appendChild(groupHeader);
+
+        const groupList = document.createElement("div");
+        groupList.className = "shopping-group-items";
+
+        for (const item of groupItems) {
+            const key = `${item.name}||${item.unit || ""}`;
+            const isChecked = state.shoppingChecked.has(key);
+
+            const div = document.createElement("div");
+            div.className = "shopping-item" + (isChecked ? " checked" : "");
+
+            const cb = document.createElement("input");
+            cb.type = "checkbox";
+            cb.checked = isChecked;
+            cb.onchange = () => {
+                div.classList.toggle("checked", cb.checked);
+                if (cb.checked) {
+                    state.shoppingChecked.add(key);
+                } else {
+                    state.shoppingChecked.delete(key);
+                }
+                persistShoppingChecked();
+                updateShoppingProgress();
+            };
+
+            const text = document.createElement("span");
+            text.className = "shopping-item-text";
+            const scaledQty = item.quantity ? item.quantity * numPeople : null;
+            if (scaledQty) {
+                const unit = item.unit || "";
+                text.innerHTML = `<span class="shopping-item-qty">${formatQty(scaledQty)}${unit}</span> ${escapeHtml(item.name)}`;
+            } else {
+                text.textContent = item.name;
+            }
+
+            div.appendChild(cb);
+            div.appendChild(text);
+            groupList.appendChild(div);
         }
 
-        div.appendChild(cb);
-        div.appendChild(text);
-        list.appendChild(div);
+        groupDiv.appendChild(groupList);
+        list.appendChild(groupDiv);
     }
+
+    document.getElementById("shopping-count").textContent = `(${totalCount})`;
 }
 
 export function toggleShoppingList() {
@@ -480,23 +708,62 @@ function getSavedPlans() {
     }
 }
 
-export function savePlanToStorage() {
+export async function savePlanToStorage() {
     if (!state.lastPlanData) return;
 
-    const plans = getSavedPlans();
-    const now = new Date();
-    plans.unshift({
-        id: Date.now(),
-        date: now.toLocaleDateString("it-IT"),
-        time: now.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" }),
-        numPeople: getNumPeople(),
-        data: state.lastPlanData,
-    });
+    if (state.currentUser) {
+        // Cloud save (Firestore)
+        try {
+            const now = new Date();
+            await API.savePlanToCloud({
+                label: `Piano del ${now.toLocaleDateString("it-IT")} ${now.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}`,
+                num_people: getNumPeople(),
+                plan: state.lastPlanData.plan,
+                shopping_list: state.lastPlanData.shopping_list,
+                excluded_recipes: state.lastPlanData.excluded_recipes || [],
+            });
+            showToast("Piano salvato nel cloud!", "success");
+        } catch (e) {
+            showToast("Errore nel salvataggio", "error");
+            return;
+        }
+    } else {
+        // Local save (localStorage)
+        const plans = getSavedPlans();
+        const now = new Date();
+        plans.unshift({
+            id: Date.now(),
+            date: now.toLocaleDateString("it-IT"),
+            time: now.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" }),
+            numPeople: getNumPeople(),
+            data: state.lastPlanData,
+        });
 
-    if (plans.length > 10) plans.length = 10;
-    localStorage.setItem("quickchef-saved-plans", JSON.stringify(plans));
-    showToast("Piano salvato!", "success");
+        if (plans.length > 10) plans.length = 10;
+        localStorage.setItem("quickchef-saved-plans", JSON.stringify(plans));
+        showToast("Piano salvato!", "success");
+    }
+
     renderSavedPlans();
+
+    // Auto-open, scroll, highlight
+    const container = document.getElementById("saved-plans-container");
+    const icon = document.getElementById("saved-plans-toggle-icon");
+    if (!container.classList.contains("open")) {
+        container.classList.add("open");
+        icon.classList.add("open");
+    }
+
+    setTimeout(() => {
+        const section = document.getElementById("saved-plans-section");
+        section.scrollIntoView({ behavior: "smooth", block: "start" });
+
+        const firstCard = document.querySelector(".saved-plan-card");
+        if (firstCard) {
+            firstCard.classList.add("saved-plan-pulse");
+            setTimeout(() => firstCard.classList.remove("saved-plan-pulse"), 2000);
+        }
+    }, 100);
 }
 
 function loadSavedPlan(id) {
@@ -517,18 +784,38 @@ function loadSavedPlan(id) {
     }
 }
 
-function deleteSavedPlan(id, event) {
+async function deleteSavedPlan(id, event) {
     event.stopPropagation();
-    const plans = getSavedPlans().filter((p) => p.id !== id);
-    localStorage.setItem("quickchef-saved-plans", JSON.stringify(plans));
+    if (state.currentUser) {
+        try {
+            await API.deleteUserPlan(id);
+        } catch (e) {
+            showToast("Errore nell'eliminazione", "error");
+            return;
+        }
+    } else {
+        const plans = getSavedPlans().filter((p) => p.id !== id);
+        localStorage.setItem("quickchef-saved-plans", JSON.stringify(plans));
+    }
     renderSavedPlans();
     showToast("Piano eliminato", "info");
 }
 
-export function renderSavedPlans() {
-    const plans = getSavedPlans();
+export async function renderSavedPlans() {
+    let plans;
+    if (state.currentUser) {
+        try {
+            plans = await API.getUserPlans();
+        } catch {
+            plans = [];
+        }
+    } else {
+        plans = getSavedPlans();
+    }
+
     const list = document.getElementById("saved-plans-list");
     const count = document.getElementById("saved-plans-count");
+    if (!list || !count) return;
     list.innerHTML = "";
     count.textContent = plans.length > 0 ? `(${plans.length})` : "";
 
@@ -540,12 +827,23 @@ export function renderSavedPlans() {
     for (const plan of plans) {
         const card = document.createElement("div");
         card.className = "saved-plan-card";
-        card.onclick = () => loadSavedPlan(plan.id);
 
-        card.innerHTML = `
-            <div class="saved-plan-date">${escapeHtml(plan.date)} - ${escapeHtml(plan.time)}</div>
-            <div class="saved-plan-info">${plan.numPeople || 2} persone</div>
-        `;
+        if (state.currentUser) {
+            // Cloud plan
+            card.onclick = () => loadCloudPlan(plan);
+            const label = plan.label || "Piano";
+            card.innerHTML = `
+                <div class="saved-plan-date">${escapeHtml(label)}</div>
+                <div class="saved-plan-info">${plan.num_people || 2} persone</div>
+            `;
+        } else {
+            // Local plan
+            card.onclick = () => loadSavedPlan(plan.id);
+            card.innerHTML = `
+                <div class="saved-plan-date">${escapeHtml(plan.date)} - ${escapeHtml(plan.time)}</div>
+                <div class="saved-plan-info">${plan.numPeople || 2} persone</div>
+            `;
+        }
 
         const delBtn = document.createElement("button");
         delBtn.className = "saved-plan-delete";
@@ -556,6 +854,24 @@ export function renderSavedPlans() {
 
         list.appendChild(card);
     }
+}
+
+function loadCloudPlan(plan) {
+    state.lastPlanData = {
+        plan: plan.plan,
+        shopping_list: plan.shopping_list,
+        excluded_recipes: plan.excluded_recipes || [],
+    };
+    document.getElementById("num-people").value = plan.num_people || 2;
+    rescaleAndRender();
+    renderShoppingList();
+
+    document.getElementById("plan-section").classList.remove("hidden");
+    document.getElementById("export-controls").classList.remove("hidden");
+    document.getElementById("empty-state").classList.add("hidden");
+    document.getElementById("shopping-section").classList.remove("hidden");
+
+    showToast("Piano caricato!", "info");
 }
 
 export function toggleSavedPlans() {
@@ -580,6 +896,10 @@ export function closeDropdowns() {
 
 document.addEventListener("click", (e) => {
     if (!e.target.closest(".dropdown")) closeDropdowns();
+    if (!e.target.closest(".recipe-files-select")) {
+        const dd = document.getElementById("recipe-files-dropdown");
+        if (dd) dd.classList.remove("open");
+    }
 });
 
 /* ===== Export ===== */

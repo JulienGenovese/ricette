@@ -45,7 +45,14 @@
       "Bash(UV_PROJECT_ENVIRONMENT=/home/julien/Documents/python-proj/ricette/.venv2 uv run pytest:*)",
       "Bash(UV_PROJECT_ENVIRONMENT=/home/julien/Documents/python-proj/ricette/.venv2 uv run python:*)",
       "Bash(sudo chown:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(.venv2/bin/python3:*)",
+      "Bash(UV_PROJECT_ENVIRONMENT=/tmp/ricette-venv uv run:*)",
+      "Bash(.venv2/bin/python:*)",
+      "Bash(grep:*)",
+      "Bash(uv lock:*)",
+      "Bash(VIRTUAL_ENV=/tmp/ricette-venv uv sync:*)",
+      "Bash(UV_PROJECT_ENVIRONMENT=/tmp/ricette-venv uv sync:*)"
     ]
   }
 }

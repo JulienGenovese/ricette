@@ -16,10 +16,15 @@ import { generatePlan, rescaleAndRender, resetExclusions, toggleCompactView,
          mobileSwipePrev, mobileSwipeNext, toggleShoppingList, toggleSavedPlans,
          savePlanToStorage, exportFile, toggleDropdown, closeDropdowns,
          renderSavedPlans, renderShoppingList, setupMobileSwipe,
-         removeDay, removeMeal } from "./planner.js";
+         removeDay, removeMeal, openRecipeDetailModal, closeRecipeDetailModal,
+         loadRecipeFiles, toggleRecipeFilesDropdown } from "./planner.js";
 import { toggleTheme } from "./theme.js";
 import { shouldShowTutorial, startTutorial, skipTutorial, nextStep as tutorialNext, prevStep as tutorialPrev } from "./tutorial.js";
 import { initTips, showTips, hideTips, dismissTips, nextTip, prevTip } from "./tips.js";
+import { initAuth, loginWithEmail, registerWithEmail, loginWithGoogle,
+         logoutUser, showAuthTab, acceptGdpr, declineGdpr,
+         exportUserData, confirmDeleteAccount, deleteAccountConfirmed,
+         toggleUserDropdown } from "./auth.js";
 
 // Attach to window for inline onclick handlers
 Object.assign(window, {
@@ -30,15 +35,23 @@ Object.assign(window, {
     resetWizard, filterManageRecipes, openEditModal, openDeleteModal,
     confirmDelete, confirmEdit, closeModal, skipPreferences, prefNext, prefPrev,
     renderShoppingList, removeDay, removeMeal,
+    openRecipeDetailModal, closeRecipeDetailModal,
+    toggleRecipeFilesDropdown,
     startTutorial, skipTutorial, tutorialNext, tutorialPrev,
     showTips, hideTips, dismissTips, nextTip, prevTip,
+    loginWithEmail, registerWithEmail, loginWithGoogle,
+    logoutUser, showAuthTab, acceptGdpr, declineGdpr,
+    exportUserData, confirmDeleteAccount, deleteAccountConfirmed,
+    toggleUserDropdown,
 });
 
 document.addEventListener("DOMContentLoaded", () => {
+    initAuth();
     initTheme();
     startSlideshow(document.getElementById("landing"));
     renderWizardBreadcrumb();
     renderSavedPlans();
+    loadRecipeFiles();
 
     window.addEventListener("resize", () => {
         if (state.lastPlanData) setupMobileSwipe();

@@ -15,18 +15,23 @@ class RecipeRepository:
     def __init__(self, dirpath: str | Path):
         self._dirpath = Path(dirpath)
 
-    def load_recipes(self) -> tuple[dict[str, list[Recipe]], set[str]]:
+    def list_files(self) -> list[str]:
+        """Ritorna i nomi dei file .xlsx disponibili nella directory."""
+        return sorted(f.name for f in self._dirpath.glob("*.xlsx"))
+
+    def load_recipes(self) -> tuple[dict[str, list[Recipe]], set[str], dict[str, str]]:
         """Carica ricette da tutti i file .xlsx nella directory.
-        Ritorna: ({categoria: [lista_ricette]}, set_nomi_ricette_utente)
+        Ritorna: ({categoria: [lista_ricette]}, set_nomi_ricette_utente, {nome_ricetta: nome_file})
         """
         recipes_by_category: dict[str, list[Recipe]] = {cat: [] for cat in self.CATEGORIES}
         user_recipe_names: set[str] = set()
+        recipe_sources: dict[str, str] = {}
         required_cols = {"RICETTA", "INGREDIENTI", "STAGIONALITA", "FONTE", "FONTE 2"}
 
         xlsx_files = sorted(self._dirpath.glob("*.xlsx"))
         if not xlsx_files:
             logger.warning("Nessun file .xlsx trovato in {}", self._dirpath)
-            return recipes_by_category, user_recipe_names
+            return recipes_by_category, user_recipe_names, recipe_sources
 
         for filepath in xlsx_files:
             is_user_file = "_ricette_utente.xlsx" in filepath.name
@@ -49,15 +54,17 @@ class RecipeRepository:
                         for _, row in df.iterrows()
                     ]
                     recipes_by_category[category].extend(recipes)
+                    for r in recipes:
+                        recipe_sources[r.name] = filepath.name
                     if is_user_file:
                         user_recipe_names.update(r.name for r in recipes)
-                except (ValueError, Exception):
-                    pass
+                except Exception:
+                    logger.debug("Sheet '{}' non trovato o non valido in {}", category, filepath.name)
 
         for cat, recipes in recipes_by_category.items():
             logger.info("{}: {} ricette caricate", cat, len(recipes))
 
-        return recipes_by_category, user_recipe_names
+        return recipes_by_category, user_recipe_names, recipe_sources
 
 
 class BaseExcelWriter:

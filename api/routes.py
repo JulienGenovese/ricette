@@ -1,9 +1,11 @@
 """Endpoint handlers per l'API del piano settimanale."""
 from enum import Enum
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
+from loguru import logger
 
+from api.auth import CurrentUser, get_optional_user
 from api.export import EXPORT_HANDLERS, EXPORT_MEDIA_TYPES, EXPORT_FILENAMES
 from api.models import (
     AddRecipeRequest,
@@ -15,6 +17,7 @@ from api.models import (
     GenerateResponse,
     PreferencesRequest,
     RecipeDetailResponse,
+    RecipeFilesResponse,
     RecipeListItem,
     RecipeListResponse,
     ReplaceRequest,
@@ -61,17 +64,15 @@ async def all_recipe_details(request: Request):
 
 
 @router.get("/recipes/search", response_model=RecipeDetailResponse)
-async def search_recipes(request: Request, q: str = ""):
+async def search_recipes(request: Request, q: str = Query(min_length=1, max_length=200)):
     """Cerca ricette per nome o ingredienti."""
-    if not q.strip():
-        raise HTTPException(status_code=400, detail="Il parametro 'q' e' obbligatorio")
     service = request.app.state.recipe_service
     results = service.search_recipes(q.strip())
     return RecipeDetailResponse(recipes=results)
 
 
 @router.get("/featured-recipes", response_model=FeaturedRecipesResponse)
-async def featured_recipes(request: Request, n: int = 4):
+async def featured_recipes(request: Request, n: int = Query(default=4, ge=1, le=20)):
     """Ritorna ricette casuali per la selezione preferenze."""
     service = request.app.state.recipe_service
     recipes = service.get_featured_recipes(n=n)
@@ -79,16 +80,44 @@ async def featured_recipes(request: Request, n: int = 4):
 
 
 @router.post("/preferences")
-async def set_preferences(body: PreferencesRequest, request: Request):
+async def set_preferences(
+    body: PreferencesRequest,
+    request: Request,
+    user: CurrentUser | None = Depends(get_optional_user),
+):
     """Salva le preferenze dell'utente e aumenta la probabilita' delle ricette selezionate."""
     service = request.app.state.recipe_service
     service.boost_preferred(body.recipes)
+
+    if user:
+        user_service = request.app.state.user_service
+        user_service.save_preferences(user.uid, body.recipes)
+
     return {"success": True, "boosted": len(body.recipes)}
 
 
 @router.post("/recipes", response_model=AddRecipeResponse)
-async def add_recipe(body: AddRecipeRequest, request: Request):
-    """Aggiunge una nuova ricetta e la salva in un file Excel."""
+async def add_recipe(
+    body: AddRecipeRequest,
+    request: Request,
+    user: CurrentUser | None = Depends(get_optional_user),
+):
+    """Aggiunge una nuova ricetta. Se autenticato, salva in Firestore; altrimenti in Excel."""
+    if user:
+        user_service = request.app.state.user_service
+        user_service.add_user_recipe(user.uid, {
+            "category": body.category,
+            "name": body.name,
+            "ingredients": body.ingredients,
+            "seasonality": body.seasonality,
+            "source1": body.source1,
+            "source2": body.source2,
+        })
+        return AddRecipeResponse(
+            success=True,
+            message=f"Ricetta '{body.name}' salvata nel tuo profilo!",
+        )
+
     service = request.app.state.recipe_service
     try:
         service.add_recipe(
@@ -102,8 +131,9 @@ async def add_recipe(body: AddRecipeRequest, request: Request):
         return AddRecipeResponse(success=True, message=f"Ricetta '{body.name}' salvata con successo!")
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Errore durante il salvataggio: {e}")
+    except Exception:
+        logger.exception("Errore durante il salvataggio della ricetta '{}'", body.name)
+        raise HTTPException(status_code=500, detail="Errore interno durante il salvataggio")
 
 
 @router.put("/recipes/{name}", response_model=UpdateRecipeResponse)
@@ -120,8 +150,9 @@ async def update_recipe(name: str, body: UpdateRecipeRequest, request: Request):
         return UpdateRecipeResponse(success=True, message=f"Ricetta '{name}' aggiornata con successo!")
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Errore durante l'aggiornamento: {e}")
+    except Exception:
+        logger.exception("Errore durante l'aggiornamento della ricetta '{}'", name)
+        raise HTTPException(status_code=500, detail="Errore interno durante l'aggiornamento")
 
 
 @router.delete("/recipes/{name}", response_model=DeleteRecipeResponse)
@@ -135,21 +166,47 @@ async def delete_recipe(name: str, request: Request):
         return DeleteRecipeResponse(success=True, message=f"Ricetta '{name}' eliminata con successo!")
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Errore durante l'eliminazione: {e}")
+    except Exception:
+        logger.exception("Errore durante l'eliminazione della ricetta '{}'", name)
+        raise HTTPException(status_code=500, detail="Errore interno durante l'eliminazione")
+
+
+@router.get("/recipe-files", response_model=RecipeFilesResponse)
+async def list_recipe_files(request: Request):
+    """Ritorna l'elenco dei file di ricette disponibili."""
+    service = request.app.state.recipe_service
+    files = service.list_recipe_files()
+    return RecipeFilesResponse(files=files)
 
 
 @router.post("/generate", response_model=GenerateResponse)
-async def generate_plan(body: GenerateRequest, request: Request):
+async def generate_plan(
+    body: GenerateRequest,
+    request: Request,
+    user: CurrentUser | None = Depends(get_optional_user),
+):
     """Genera un nuovo piano settimanale con lista della spesa.
 
     Accetta il numero di persone e una lista opzionale di ricette
-    da escludere. Ritorna il piano arricchito e la lista della spesa
-    con quantita' scalate.
+    da escludere. Se autenticato, include le ricette personali dell'utente.
     """
     service = request.app.state.recipe_service
+    user_recipes = []
+    if user:
+        user_service = request.app.state.user_service
+        user_recipes = user_service.get_user_recipes(user.uid)
+
     try:
-        result = service.generate_plan(body.num_people, body.excluded_recipes, body.season)
+        if user_recipes:
+            result = service.generate_plan_with_user_recipes(
+                body.num_people, body.excluded_recipes, body.season, user_recipes,
+                recipe_files=body.recipe_files,
+            )
+        else:
+            result = service.generate_plan(
+                body.num_people, body.excluded_recipes, body.season,
+                recipe_files=body.recipe_files,
+            )
     except RuntimeError as e:
         raise HTTPException(
             status_code=422,

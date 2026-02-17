@@ -8,8 +8,12 @@ from loguru import logger
 from src.excel import RecipeWriter
 
 
-def remove_from_excel(recipes_dir: Path, recipe_name: str):
-    """Remove a recipe by name from all Excel files in the recipes directory."""
+def remove_from_excel(recipes_dir: Path, recipe_name: str) -> bool:
+    """Remove a recipe by name from all Excel files in the recipes directory.
+
+    Returns True if the recipe was found and removed, False otherwise.
+    """
+    found = False
     for filepath in sorted(recipes_dir.glob("*.xlsx")):
         try:
             wb = openpyxl.load_workbook(filepath)
@@ -24,11 +28,13 @@ def remove_from_excel(recipes_dir: Path, recipe_name: str):
                 for row_idx in reversed(rows_to_delete):
                     ws.delete_rows(row_idx)
                     modified = True
+                    found = True
             if modified:
                 wb.save(filepath)
                 logger.info("Ricetta '{}' rimossa da {}", recipe_name, filepath.name)
         except Exception as e:
             logger.warning("Errore rimuovendo '{}' da {}: {}", recipe_name, filepath.name, e)
+    return found
 
 
 def update_recipe_in_excel(recipes_dir: Path, original_name: str, updates: dict) -> bool:
@@ -96,6 +102,10 @@ def add_recipe_to_excel(
     expected_name = f"{timestamp}_ricette_utente.xlsx"
 
     # Riusa il file della sessione se esiste ancora, altrimenti crea nuovo
+    if session_file:
+        resolved = (recipes_dir / session_file).resolve()
+        if not resolved.is_relative_to(recipes_dir.resolve()):
+            raise ValueError(f"Nome file non valido: {session_file}")
     if session_file and (recipes_dir / session_file).exists():
         filepath = recipes_dir / session_file
         result_session = session_file

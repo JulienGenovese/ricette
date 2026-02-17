@@ -128,32 +128,42 @@ async function submitRecipe() {
     nextBtn.disabled = true;
     nextBtn.textContent = "Salvataggio...";
 
-    try {
-        const res = await fetch("/api/recipes", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                category: state.wizardData.category,
-                name: state.wizardData.name,
-                ingredients: state.wizardData.ingredients,
-                seasonality: state.wizardData.seasonality,
-                source1: state.wizardData.source1,
-                source2: state.wizardData.source2,
-            }),
-        });
+    const recipeData = {
+        category: state.wizardData.category,
+        name: state.wizardData.name,
+        ingredients: state.wizardData.ingredients,
+        seasonality: state.wizardData.seasonality,
+        source1: state.wizardData.source1,
+        source2: state.wizardData.source2,
+    };
 
-        if (!res.ok) {
-            const err = await res.json();
-            throw new Error(err.detail || "Errore durante il salvataggio");
+    try {
+        let message;
+        if (state.currentUser) {
+            const data = await API.addUserRecipe(recipeData);
+            message = `Ricetta "${recipeData.name}" salvata nel tuo profilo!`;
+        } else {
+            const res = await fetch("/api/recipes", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(recipeData),
+            });
+
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.detail || "Errore durante il salvataggio");
+            }
+
+            const data = await res.json();
+            message = data.message;
         }
 
-        const data = await res.json();
         for (let i = 1; i <= WIZARD_TOTAL_STEPS; i++) {
             document.getElementById(`wizard-step-${i}`).classList.add("hidden");
         }
         document.getElementById("wizard-nav").classList.add("hidden");
         document.getElementById("wizard-success").classList.remove("hidden");
-        document.getElementById("wizard-success-msg").textContent = data.message;
+        document.getElementById("wizard-success-msg").textContent = message;
         showToast("Ricetta salvata con successo!", "success");
         state.allRecipesCache = null;
     } catch (e) {

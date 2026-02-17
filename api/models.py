@@ -10,6 +10,10 @@ class GenerateRequest(BaseModel):
         default=None,
         description="Stagione per filtrare le ricette (Primavera, Estate, Autunno, Inverno). None = auto dalla data corrente.",
     )
+    recipe_files: list[str] | None = Field(
+        default=None,
+        description="File di ricette da usare (nomi file .xlsx). None = tutti i file.",
+    )
 
 
 class IngredientOut(BaseModel):
@@ -157,3 +161,63 @@ class RecipeDetailItem(BaseModel):
 class RecipeDetailResponse(BaseModel):
     """Lista completa di ricette con tutti i dettagli."""
     recipes: list[RecipeDetailItem]
+
+
+class RecipeFilesResponse(BaseModel):
+    """Lista dei file di ricette disponibili."""
+    files: list[str]
+
+
+# --- Auth / User models ---
+
+
+class LoginSyncResponse(BaseModel):
+    """Response after login sync with Firestore."""
+    uid: str
+    email: str
+    display_name: str | None = None
+    gdpr_consent: bool = False
+    preferences: dict = Field(default_factory=dict)
+
+
+class UserPreferencesRequest(BaseModel):
+    """User preferences to save."""
+    preferred_recipes: list[str] = Field(default_factory=list)
+    default_num_people: int = Field(ge=1, le=20, default=2)
+    default_season: str | None = None
+
+
+class SavePlanRequest(BaseModel):
+    """Save a generated plan to user's Firestore collection."""
+    label: str
+    num_people: int = Field(ge=1, le=20, default=2)
+    plan: dict
+    shopping_list: list
+    excluded_recipes: list[str] = Field(default_factory=list)
+
+
+class SavePlanResponse(BaseModel):
+    """Response after saving a plan."""
+    id: str
+    success: bool
+
+
+class UserPlanListResponse(BaseModel):
+    """List of saved plans."""
+    plans: list[dict]
+
+
+class UserRecipeRequest(BaseModel):
+    """User-created recipe."""
+    category: str
+    name: str
+    ingredients: str
+    seasonality: str
+    source1: str
+    source2: str = ""
+
+
+class UserRecipeResponse(BaseModel):
+    """Response after adding a user recipe."""
+    id: str
+    success: bool

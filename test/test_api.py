@@ -2,57 +2,8 @@
 from unittest.mock import patch
 
 import pytest
-from fastapi.testclient import TestClient
 
 from api.app import app
-from api.service import RecipeService
-from src.model import Recipe, CategorizedRecipe, DishType
-
-
-def _make_test_recipes():
-    recipes = [
-        CategorizedRecipe(
-            recipe=Recipe("Pasta pomodoro", "pomodoro 200g, pasta 100g", "Estate", "glucidica", "fibra"),
-            dish_type=DishType.PRIMO,
-        ),
-        CategorizedRecipe(
-            recipe=Recipe("Pollo arrosto", "pollo 300g, patate 200g", "Tutto l'anno", "proteica", "fibra"),
-            dish_type=DishType.SECONDO,
-        ),
-        CategorizedRecipe(
-            recipe=Recipe("Insalata mista", "lattuga 150g, pomodoro 100g", "Primavera", "fibra", ""),
-            dish_type=DishType.CONTORNO,
-        ),
-    ]
-    profiles = {
-        recipes[0].recipe: {"protein": False, "carb": True, "fiber": True},
-        recipes[1].recipe: {"protein": True, "carb": False, "fiber": True},
-        recipes[2].recipe: {"protein": False, "carb": False, "fiber": True},
-    }
-    return recipes, profiles
-
-
-def _setup_service(service, recipes, profiles):
-    """Populate a RecipeService with test data."""
-    service._all_recipes = recipes
-    service._profiles = profiles
-    service._dish_type_map = {cr.recipe: cr.dish_type.value for cr in recipes}
-    service._weights = {cr.recipe.name: 1.0 for cr in recipes}
-
-
-@pytest.fixture
-def client():
-    """TestClient that patches load() to inject test data instead of reading Excel."""
-    recipes, profiles = _make_test_recipes()
-
-    original_load = RecipeService.load
-
-    def fake_load(self):
-        _setup_service(self, recipes, profiles)
-
-    with patch.object(RecipeService, "load", fake_load):
-        with TestClient(app) as c:
-            yield c
 
 
 class TestGetAllDetails:
@@ -79,7 +30,7 @@ class TestSearchRecipes:
 
     def test_search_empty_query(self, client):
         resp = client.get("/api/recipes/search", params={"q": ""})
-        assert resp.status_code == 400
+        assert resp.status_code == 422
 
     def test_search_no_match(self, client):
         resp = client.get("/api/recipes/search", params={"q": "sushi"})
@@ -138,4 +89,4 @@ class TestGenerateWithSeason:
                 "season": "Estate",
             })
             assert resp.status_code == 200
-            mock_gen.assert_called_once_with(2, [], "Estate")
+            mock_gen.assert_called_once_with(2, [], "Estate", recipe_files=None)

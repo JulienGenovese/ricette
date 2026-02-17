@@ -18,4 +18,11 @@ export const state = {
     prefStep: 0,
     prefRecipes: {},
     prefSelected: [],
+    shoppingChecked: new Set(
+        JSON.parse(localStorage.getItem("quickchef-shopping-checked") || "[]")
+    ),
+
+    // Auth state
+    authToken: null,
+    currentUser: null,
 };

@@ -1,0 +1,273 @@
+/* ======================================================
+   Print Stylesheet
+   ====================================================== */
+
+@media print {
+    * {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    body {
+        background: #fff !important;
+        color: #000 !important;
+        font-size: 11pt;
+        line-height: 1.4;
+    }
+
+    /* ===== Hide non-essential elements ===== */
+    .main-navbar,
+    .bg-slideshow,
+    .bg-overlay,
+    .controls,
+    .export-controls,
+    .shopping-toggle,
+    .mobile-day-nav,
+    .footer,
+    .toast-container,
+    #confetti-canvas,
+    .btn-remove,
+    .btn-remove-day,
+    .btn-remove-meal,
+    .portions-badge,
+    .saved-plans-section,
+    .empty-state,
+    .skeleton-grid,
+    .error-banner,
+    #skeleton-loading,
+    .tutorial-overlay,
+    .tutorial-tooltip,
+    .tips-widget,
+    .btn-help-toggle {
+        display: none !important;
+    }
+
+    /* ===== Page layout ===== */
+    .page {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        min-height: auto !important;
+        animation: none !important;
+    }
+
+    .planner-page {
+        background: #fff !important;
+    }
+
+    /* ===== Print title ===== */
+    .plan-section::before {
+        content: "QuickChef \2014  Piano Settimanale";
+        display: block;
+        font-size: 16pt;
+        font-weight: 800;
+        text-align: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2pt solid #333;
+        color: #000;
+    }
+
+    /* ===== Plan grid ===== */
+    .plan-section {
+        padding: 0 !important;
+    }
+
+    .plan-grid {
+        display: grid !important;
+        grid-template-columns: repeat(var(--day-count, 7), 1fr) !important;
+        gap: 1px !important;
+        border: 1px solid #ccc;
+    }
+
+    .plan-grid.mobile-swipe {
+        display: grid !important;
+        overflow: visible !important;
+    }
+
+    .plan-grid.mobile-swipe .day-column {
+        min-width: 0 !important;
+    }
+
+    /* Day columns */
+    .day-column {
+        background: #fff !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        border-right: 1px solid #ddd !important;
+        animation: none !important;
+    }
+
+    .day-column:last-child {
+        border-right: none !important;
+    }
+
+    .day-header {
+        background: #f0f0f0 !important;
+        color: #000 !important;
+        padding: 0.4rem !important;
+        font-size: 9pt;
+        text-align: center;
+        border-bottom: 1px solid #ccc;
+    }
+
+    .day-header span {
+        color: #000 !important;
+        -webkit-text-fill-color: #000 !important;
+    }
+
+    /* Meal blocks */
+    .meal-block {
+        background: #fff !important;
+        backdrop-filter: none !important;
+        padding: 0.3rem 0.4rem !important;
+        border-bottom: 1px solid #eee !important;
+    }
+
+    .meal-label {
+        color: #555 !important;
+        font-size: 7pt;
+        margin-bottom: 0.2rem;
+    }
+
+    .meal-label-text {
+        color: #555 !important;
+    }
+
+    /* Recipe cards */
+    .recipe-card {
+        background: transparent !important;
+        border: none !important;
+        border-left: 2px solid #999 !important;
+        border-radius: 0 !important;
+        padding: 0.2rem 0.3rem !important;
+        margin-bottom: 0.2rem !important;
+        box-shadow: none !important;
+        transform: none !important;
+        animation: none !important;
+        cursor: default !important;
+    }
+
+    .recipe-card:hover {
+        transform: none !important;
+        box-shadow: none !important;
+    }
+
+    .recipe-name {
+        font-size: 8pt;
+        font-weight: 700;
+        color: #000 !important;
+        padding-right: 0 !important;
+        margin-bottom: 0.1rem;
+    }
+
+    .recipe-ingredients {
+        font-size: 7pt;
+        color: #444 !important;
+        margin-bottom: 0.1rem;
+    }
+
+    .nutrient-badges {
+        gap: 0.15rem;
+    }
+
+    .badge {
+        font-size: 6pt;
+        padding: 0.05rem 0.3rem;
+        border-radius: 3px;
+    }
+
+    .empty-meal {
+        font-size: 7pt;
+        color: #999 !important;
+    }
+
+    /* Force show details in compact mode */
+    .plan-grid.compact .recipe-ingredients,
+    .plan-grid.compact .nutrient-badges {
+        display: flex !important;
+    }
+
+    .plan-grid.compact .recipe-card {
+        padding: 0.2rem 0.3rem !important;
+    }
+
+    /* ===== Shopping list: expanded for print ===== */
+    .shopping-section {
+        padding: 1rem 0 !important;
+        page-break-before: always;
+    }
+
+    .shopping-list-container {
+        max-height: none !important;
+        opacity: 1 !important;
+        overflow: visible !important;
+        background: transparent !important;
+        backdrop-filter: none !important;
+        border: none !important;
+        padding: 0 !important;
+    }
+
+    .shopping-section::before {
+        content: "Lista della Spesa";
+        display: block;
+        font-size: 14pt;
+        font-weight: 800;
+        margin-bottom: 0.8rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 1pt solid #666;
+        color: #000;
+    }
+
+    .shopping-group-header {
+        color: #000 !important;
+        border-bottom: 1px solid #ccc;
+        font-size: 9pt;
+    }
+
+    .shopping-item {
+        padding: 0.15rem 0.3rem;
+    }
+
+    .shopping-item-text {
+        font-size: 9pt;
+        color: #000 !important;
+    }
+
+    .shopping-item-qty {
+        color: #333 !important;
+    }
+
+    .shopping-item input[type="checkbox"] {
+        width: 12px;
+        height: 12px;
+    }
+
+    .shopping-item.checked .shopping-item-text {
+        text-decoration: none;
+        opacity: 1;
+    }
+
+    .shopping-progress {
+        display: none !important;
+    }
+
+    /* ===== Glass and backdrop overrides ===== */
+    .glass {
+        background: transparent !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        border: none !important;
+    }
+
+    /* ===== Prevent page break in the middle of a day column ===== */
+    .day-column {
+        break-inside: avoid;
+    }
+
+    .recipe-card {
+        break-inside: avoid;
+    }
+}

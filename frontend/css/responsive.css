@@ -215,6 +215,17 @@
         max-width: none;
     }
 
+    /* Shopping progress on mobile */
+    .shopping-progress {
+        flex-direction: column;
+        gap: 0.4rem;
+        align-items: stretch;
+    }
+
+    .shopping-progress-label {
+        text-align: center;
+    }
+
     /* Plan section padding */
     .plan-section {
         padding: 1rem;
@@ -363,5 +374,17 @@
     .control-group select {
         padding: 0.4rem;
         font-size: 0.9rem;
+    }
+
+    .shopping-group-items {
+        grid-template-columns: 1fr;
+    }
+
+    .detail-ingredients-list {
+        grid-template-columns: 1fr;
+    }
+
+    .recipe-detail-modal {
+        padding: 1.5rem;
     }
 }
