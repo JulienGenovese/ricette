@@ -6,6 +6,185 @@ import {
     showToast, updateExcludedCount, launchConfetti, downloadBlob,
 } from "./helpers.js";
 
+/* ===== Scale Helpers ===== */
+
+let activeScalePopover = null;
+
+function getEffectiveScale(day, meal) {
+    const mealKey = `${day}-${meal}`;
+    const mealScale = state.mealScales[mealKey] ?? 1.0;
+    return state.globalScale * mealScale;
+}
+
+function getScaledQty(baseQty, numPeople, day, meal) {
+    if (!baseQty) return null;
+    return baseQty * numPeople * getEffectiveScale(day, meal);
+}
+
+function closeScalePopover() {
+    if (activeScalePopover) {
+        activeScalePopover.remove();
+        activeScalePopover = null;
+    }
+}
+
+function createScalePopover({ currentPercent, onChange, onReset, title }) {
+    const popover = document.createElement("div");
+    popover.className = "scale-popover";
+
+    const header = document.createElement("div");
+    header.className = "scale-popover-title";
+    header.textContent = title;
+
+    const closeBtn = document.createElement("button");
+    closeBtn.className = "scale-popover-close";
+    closeBtn.innerHTML = "&times;";
+    closeBtn.onclick = (e) => { e.stopPropagation(); closeScalePopover(); };
+    header.appendChild(closeBtn);
+    popover.appendChild(header);
+
+    const valueLabel = document.createElement("div");
+    valueLabel.className = "scale-popover-value";
+    function updateValueLabel(pct) {
+        const sign = pct > 0 ? "+" : "";
+        valueLabel.textContent = `${sign}${pct}%`;
+        valueLabel.classList.toggle("negative", pct < 0);
+        valueLabel.classList.toggle("positive", pct > 0);
+    }
+    updateValueLabel(currentPercent);
+    popover.appendChild(valueLabel);
+
+    const controls = document.createElement("div");
+    controls.className = "scale-popover-controls";
+
+    const minusBtn = document.createElement("button");
+    minusBtn.textContent = "\u2212";
+    minusBtn.title = "-5%";
+
+    const slider = document.createElement("input");
+    slider.type = "range";
+    slider.className = "scale-popover-slider";
+    slider.min = -50;
+    slider.max = 100;
+    slider.step = 5;
+    slider.value = currentPercent;
+
+    const plusBtn = document.createElement("button");
+    plusBtn.textContent = "+";
+    plusBtn.title = "+5%";
+
+    function setVal(v) {
+        v = Math.max(-50, Math.min(100, v));
+        slider.value = v;
+        updateValueLabel(v);
+        onChange(v);
+    }
+
+    slider.oninput = () => setVal(parseInt(slider.value));
+    minusBtn.onclick = (e) => { e.stopPropagation(); setVal(parseInt(slider.value) - 5); };
+    plusBtn.onclick = (e) => { e.stopPropagation(); setVal(parseInt(slider.value) + 5); };
+
+    controls.appendChild(minusBtn);
+    controls.appendChild(slider);
+    controls.appendChild(plusBtn);
+    popover.appendChild(controls);
+
+    const resetBtn = document.createElement("button");
+    resetBtn.className = "scale-popover-reset";
+    resetBtn.textContent = "Ripristina";
+    resetBtn.onclick = (e) => { e.stopPropagation(); onReset(); };
+    popover.appendChild(resetBtn);
+
+    popover.addEventListener("click", (e) => e.stopPropagation());
+
+    return popover;
+}
+
+function positionPopover(popover, anchor) {
+    const rect = anchor.getBoundingClientRect();
+    popover.style.position = "fixed";
+    popover.style.zIndex = "300";
+    popover.style.top = `${rect.bottom + 8}px`;
+    popover.style.left = `${rect.left}px`;
+    requestAnimationFrame(() => {
+        const popRect = popover.getBoundingClientRect();
+        if (popRect.right > window.innerWidth - 8) {
+            popover.style.left = `${window.innerWidth - popRect.width - 8}px`;
+        }
+        if (popRect.bottom > window.innerHeight - 8) {
+            popover.style.top = `${rect.top - popRect.height - 8}px`;
+        }
+    });
+}
+
+function openScalePopover(anchorEl, day, meal) {
+    closeScalePopover();
+    const mealKey = `${day}-${meal}`;
+    const currentScale = state.mealScales[mealKey] ?? 1.0;
+    const currentPercent = Math.round((currentScale - 1) * 100);
+
+    const popover = createScalePopover({
+        currentPercent,
+        title: `${day} \u2014 ${meal}`,
+        onChange: (pct) => {
+            state.mealScales[mealKey] = 1 + pct / 100;
+            recalcShoppingList();
+            rescaleAndRender();
+            renderShoppingList();
+        },
+        onReset: () => {
+            delete state.mealScales[mealKey];
+            recalcShoppingList();
+            rescaleAndRender();
+            renderShoppingList();
+            closeScalePopover();
+        },
+    });
+
+    positionPopover(popover, anchorEl);
+    document.body.appendChild(popover);
+    activeScalePopover = popover;
+}
+
+export function openGlobalScalePopover() {
+    closeScalePopover();
+    const currentPercent = Math.round((state.globalScale - 1) * 100);
+    const anchorEl = document.getElementById("btn-scale-global");
+
+    const popover = createScalePopover({
+        currentPercent,
+        title: "Scala Globale",
+        onChange: (pct) => {
+            state.globalScale = 1 + pct / 100;
+            updateGlobalScaleLabel();
+            recalcShoppingList();
+            rescaleAndRender();
+            renderShoppingList();
+        },
+        onReset: () => {
+            state.globalScale = 1.0;
+            updateGlobalScaleLabel();
+            recalcShoppingList();
+            rescaleAndRender();
+            renderShoppingList();
+            closeScalePopover();
+        },
+    });
+
+    positionPopover(popover, anchorEl);
+    document.body.appendChild(popover);
+    activeScalePopover = popover;
+}
+
+function updateGlobalScaleLabel() {
+    const label = document.getElementById("global-scale-label");
+    const btn = document.getElementById("btn-scale-global");
+    if (!label) return;
+    const pct = Math.round((state.globalScale - 1) * 100);
+    label.textContent = pct === 0 ? "" : `${pct > 0 ? "+" : ""}${pct}%`;
+    if (btn) btn.classList.toggle("active", pct !== 0);
+}
+
 /* ===== Helpers ===== */
 
 function getVisibleDays() {
@@ -18,18 +197,20 @@ function recalcShoppingList() {
     const plan = state.lastPlanData.plan;
     const map = new Map();
 
-    for (const dayData of Object.values(plan)) {
+    for (const [day, dayData] of Object.entries(plan)) {
         if (!dayData.meals) continue;
-        for (const mealData of Object.values(dayData.meals)) {
+        for (const [meal, mealData] of Object.entries(dayData.meals)) {
             if (!mealData.recipes) continue;
+            const effectiveScale = getEffectiveScale(day, meal);
             for (const recipe of mealData.recipes) {
                 if (!recipe.ingredients) continue;
                 for (const ing of recipe.ingredients) {
                     const key = `${ing.name}||${ing.unit || ""}`;
+                    const scaledQty = (ing.quantity || 0) * effectiveScale;
                     if (map.has(key)) {
-                        map.get(key).quantity = (map.get(key).quantity || 0) + (ing.quantity || 0);
+                        map.get(key).quantity += scaledQty;
                     } else {
-                        map.set(key, { name: ing.name, quantity: ing.quantity || 0, unit: ing.unit || "" });
+                        map.set(key, { name: ing.name, quantity: scaledQty, unit: ing.unit || "" });
                     }
                 }
             }
@@ -101,6 +282,9 @@ export async function generatePlan() {
 
     try {
         state.lastPlanData = await API.generate(state.excludedRecipes, season, recipeFiles);
+        state.mealScales = {};
+        state.globalScale = 1.0;
+        updateGlobalScaleLabel();
         rescaleAndRender();
         updateExcludedCount();
 
@@ -165,6 +349,7 @@ export function removeDay(day) {
         col.classList.add("fade-out-day");
         setTimeout(() => {
             delete state.lastPlanData.plan[day];
+            for (const m of MEALS_ORDER) delete state.mealScales[`${day}-${m}`];
             recalcShoppingList();
 
             const visibleDays = getVisibleDays();
@@ -204,6 +389,7 @@ export function removeMeal(day, meal) {
 
     setTimeout(() => {
         dayData.meals[meal].recipes = [];
+        delete state.mealScales[`${day}-${meal}`];
         recalcShoppingList();
         rescaleAndRender();
         renderShoppingList();
@@ -289,7 +475,18 @@ function swapMeals(fromDay, fromMeal, toDay, toMeal) {
     const temp = plan[fromDay].meals[fromMeal];
     plan[fromDay].meals[fromMeal] = plan[toDay].meals[toMeal];
     plan[toDay].meals[toMeal] = temp;
+
+    const fromKey = `${fromDay}-${fromMeal}`;
+    const toKey = `${toDay}-${toMeal}`;
+    const tempScale = state.mealScales[fromKey];
+    state.mealScales[fromKey] = state.mealScales[toKey];
+    state.mealScales[toKey] = tempScale;
+    if (state.mealScales[fromKey] === undefined) delete state.mealScales[fromKey];
+    if (state.mealScales[toKey] === undefined) delete state.mealScales[toKey];
+
+    recalcShoppingList();
     rescaleAndRender();
+    renderShoppingList();
     showToast("Pasti scambiati!", "success");
 }
 
@@ -341,13 +538,13 @@ function setupMealDrag(block, day, meal) {
 
 /* ===== Recipe Detail Modal ===== */
 
-export function openRecipeDetailModal(recipe, numPeople) {
+export function openRecipeDetailModal(recipe, numPeople, day, meal) {
     const root = document.getElementById("modal-root");
 
     let ingredientsHtml = "";
     if (recipe.ingredients && recipe.ingredients.length > 0) {
         const items = recipe.ingredients.map((ing) => {
-            const scaledQty = ing.quantity ? ing.quantity * numPeople : null;
+            const scaledQty = getScaledQty(ing.quantity, numPeople, day, meal);
             const unit = ing.unit || "";
             if (scaledQty) {
                 return `<li><span class="detail-ing-qty">${formatQty(scaledQty)}${unit}</span> ${escapeHtml(ing.name)}</li>`;
@@ -448,6 +645,28 @@ function renderPlan(plan, numPeople) {
             label.appendChild(labelText);
 
             if (hasRecipes) {
+                const mealKey = `${day}-${meal}`;
+                const mealScale = state.mealScales[mealKey];
+                const hasScale = mealScale !== undefined && mealScale !== 1.0;
+
+                const scaleMealBtn = document.createElement("button");
+                scaleMealBtn.className = "btn-scale-meal" + (hasScale ? " active" : "");
+                scaleMealBtn.innerHTML = `<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M5 7l7-4 7 4"/><path d="M3 14c0-1.1.9-2 2-2s2 .9 2 2"/><path d="M17 14c0-1.1.9-2 2-2s2 .9 2 2"/><path d="M5 7l-2 7h4"/><path d="M19 7l2 7h-4"/></svg>`;
+                scaleMealBtn.title = "Scala quantita'";
+                scaleMealBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    openScalePopover(scaleMealBtn, day, meal);
+                };
+                label.appendChild(scaleMealBtn);
+
+                if (hasScale) {
+                    const indicator = document.createElement("span");
+                    indicator.className = "scale-indicator";
+                    const pct = Math.round((mealScale - 1) * 100);
+                    indicator.textContent = `${pct > 0 ? "+" : ""}${pct}%`;
+                    label.appendChild(indicator);
+                }
+
                 const removeMealBtn = document.createElement("button");
                 removeMealBtn.className = "btn-remove-meal";
                 removeMealBtn.innerHTML = "&times;";
@@ -495,7 +714,7 @@ function createRecipeCard(recipe, numPeople, day, meal) {
     card.style.cursor = "pointer";
     card.onclick = (e) => {
         if (e.target.closest(".btn-remove") || e.target.closest(".portions-badge")) return;
-        openRecipeDetailModal(recipe, numPeople);
+        openRecipeDetailModal(recipe, numPeople, day, meal);
     };
 
     // Feature 10: portions badge
@@ -516,7 +735,7 @@ function createRecipeCard(recipe, numPeople, day, meal) {
         const ingDiv = document.createElement("div");
         ingDiv.className = "recipe-ingredients";
         const parts = recipe.ingredients.map((ing) => {
-            const scaledQty = ing.quantity ? ing.quantity * numPeople : null;
+            const scaledQty = getScaledQty(ing.quantity, numPeople, day, meal);
             if (scaledQty) {
                 const unit = ing.unit || "";
                 return `${formatQty(scaledQty)}${unit} ${ing.name}`;
@@ -711,8 +930,10 @@ function getSavedPlans() {
 export async function savePlanToStorage() {
     if (!state.lastPlanData) return;
 
+    let savedToCloud = false;
+
     if (state.currentUser) {
-        // Cloud save (Firestore)
+        // Cloud save (Firestore) with fallback to local
         try {
             const now = new Date();
             await API.savePlanToCloud({
@@ -721,13 +942,17 @@ export async function savePlanToStorage() {
                 plan: state.lastPlanData.plan,
                 shopping_list: state.lastPlanData.shopping_list,
                 excluded_recipes: state.lastPlanData.excluded_recipes || [],
+                mealScales: { ...state.mealScales },
+                globalScale: state.globalScale,
             });
             showToast("Piano salvato nel cloud!", "success");
+            savedToCloud = true;
         } catch (e) {
-            showToast("Errore nel salvataggio", "error");
-            return;
+            console.warn("Cloud save failed, falling back to localStorage:", e);
         }
-    } else {
+    }
+
+    if (!savedToCloud) {
         // Local save (localStorage)
         const plans = getSavedPlans();
         const now = new Date();
@@ -737,11 +962,13 @@ export async function savePlanToStorage() {
             time: now.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" }),
             numPeople: getNumPeople(),
             data: state.lastPlanData,
+            mealScales: { ...state.mealScales },
+            globalScale: state.globalScale,
         });
 
         if (plans.length > 10) plans.length = 10;
         localStorage.setItem("quickchef-saved-plans", JSON.stringify(plans));
-        showToast("Piano salvato!", "success");
+        showToast("Piano salvato in locale!", "success");
     }
 
     renderSavedPlans();
@@ -771,7 +998,11 @@ function loadSavedPlan(id) {
     const plan = plans.find((p) => p.id === id);
     if (plan) {
         state.lastPlanData = plan.data;
+        state.mealScales = plan.mealScales || {};
+        state.globalScale = plan.globalScale || 1.0;
+        updateGlobalScaleLabel();
         document.getElementById("num-people").value = plan.numPeople || 2;
+        recalcShoppingList();
         rescaleAndRender();
         renderShoppingList();
 
@@ -862,7 +1093,11 @@ function loadCloudPlan(plan) {
         shopping_list: plan.shopping_list,
         excluded_recipes: plan.excluded_recipes || [],
     };
+    state.mealScales = plan.mealScales || {};
+    state.globalScale = plan.globalScale || 1.0;
+    updateGlobalScaleLabel();
     document.getElementById("num-people").value = plan.num_people || 2;
+    recalcShoppingList();
     rescaleAndRender();
     renderShoppingList();
 
@@ -900,15 +1135,43 @@ document.addEventListener("click", (e) => {
         const dd = document.getElementById("recipe-files-dropdown");
         if (dd) dd.classList.remove("open");
     }
+    if (!e.target.closest(".scale-popover") && !e.target.closest(".btn-scale-meal") && !e.target.closest(".btn-scale-global")) {
+        closeScalePopover();
+    }
+});
+
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeScalePopover();
 });
 
 /* ===== Export ===== */
+
+function getScaledPlanData() {
+    if (!state.lastPlanData) return null;
+    const data = JSON.parse(JSON.stringify(state.lastPlanData));
+    for (const [day, dayData] of Object.entries(data.plan)) {
+        if (!dayData.meals) continue;
+        for (const [meal, mealData] of Object.entries(dayData.meals)) {
+            if (!mealData.recipes) continue;
+            const effectiveScale = getEffectiveScale(day, meal);
+            if (effectiveScale === 1.0) continue;
+            for (const recipe of mealData.recipes) {
+                if (!recipe.ingredients) continue;
+                for (const ing of recipe.ingredients) {
+                    if (ing.quantity) ing.quantity *= effectiveScale;
+                }
+            }
+        }
+    }
+    return data;
+}
 
 export async function exportFile(type, format) {
     if (!state.lastPlanData) return;
 
     try {
-        const blob = await API.exportFile(type, format, state.lastPlanData, getNumPeople());
+        const scaledData = getScaledPlanData();
+        const blob = await API.exportFile(type, format, scaledData, getNumPeople());
         const ext = format === "excel" ? "xlsx" : "pdf";
         const label = type === "plan" ? "piano_settimanale" : "lista_della_spesa";
         downloadBlob(blob, `${label}.${ext}`);

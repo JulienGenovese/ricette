@@ -230,6 +230,10 @@
 
                 <!-- Export dropdowns (visible only after plan is generated) -->
                 <div id="export-controls" class="export-controls hidden">
+                    <button class="btn-scale-global" id="btn-scale-global" onclick="openGlobalScalePopover()" title="Scala quantita'">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M5 7l7-4 7 4"/><path d="M3 14c0-1.1.9-2 2-2s2 .9 2 2"/><path d="M17 14c0-1.1.9-2 2-2s2 .9 2 2"/><path d="M5 7l-2 7h4"/><path d="M19 7l2 7h-4"/></svg>
+                        <span id="global-scale-label"></span>
+                    </button>
                     <button class="btn-ghost" onclick="savePlanToStorage()">Salva Piano</button>
                     <div class="dropdown">
                         <button class="btn-export" onclick="toggleDropdown('dd-plan')">

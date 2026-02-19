@@ -102,6 +102,26 @@
         text-align: center;
     }
 
+    /* Scale buttons always visible on mobile (no hover) */
+    .btn-scale-meal {
+        opacity: 1;
+    }
+
+    .btn-remove-meal {
+        opacity: 1;
+    }
+
+    /* Scale popover: bottom sheet on mobile */
+    .scale-popover {
+        position: fixed !important;
+        bottom: calc(var(--navbar-height) + 1rem) !important;
+        top: auto !important;
+        left: 1rem !important;
+        right: 1rem !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
     /* Bottom navbar on mobile */
     .main-navbar {
         top: auto;

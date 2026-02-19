@@ -17,7 +17,8 @@ import { generatePlan, rescaleAndRender, resetExclusions, toggleCompactView,
          savePlanToStorage, exportFile, toggleDropdown, closeDropdowns,
          renderSavedPlans, renderShoppingList, setupMobileSwipe,
          removeDay, removeMeal, openRecipeDetailModal, closeRecipeDetailModal,
-         loadRecipeFiles, toggleRecipeFilesDropdown } from "./planner.js";
+         loadRecipeFiles, toggleRecipeFilesDropdown,
+         openGlobalScalePopover } from "./planner.js";
 import { toggleTheme } from "./theme.js";
 import { shouldShowTutorial, startTutorial, skipTutorial, nextStep as tutorialNext, prevStep as tutorialPrev } from "./tutorial.js";
 import { initTips, showTips, hideTips, dismissTips, nextTip, prevTip } from "./tips.js";
@@ -37,6 +38,7 @@ Object.assign(window, {
     renderShoppingList, removeDay, removeMeal,
     openRecipeDetailModal, closeRecipeDetailModal,
     toggleRecipeFilesDropdown,
+    openGlobalScalePopover,
     startTutorial, skipTutorial, tutorialNext, tutorialPrev,
     showTips, hideTips, dismissTips, nextTip, prevTip,
     loginWithEmail, registerWithEmail, loginWithGoogle,

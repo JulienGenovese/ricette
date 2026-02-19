@@ -38,7 +38,11 @@
     .tutorial-overlay,
     .tutorial-tooltip,
     .tips-widget,
-    .btn-help-toggle {
+    .btn-help-toggle,
+    .btn-scale-meal,
+    .btn-scale-global,
+    .scale-indicator,
+    .scale-popover {
         display: none !important;
     }
 

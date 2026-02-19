@@ -52,7 +52,11 @@
       "Bash(grep:*)",
       "Bash(uv lock:*)",
       "Bash(VIRTUAL_ENV=/tmp/ricette-venv uv sync:*)",
-      "Bash(UV_PROJECT_ENVIRONMENT=/tmp/ricette-venv uv sync:*)"
+      "Bash(UV_PROJECT_ENVIRONMENT=/tmp/ricette-venv uv sync:*)",
+      "Bash(git push:*)",
+      "Bash(gh auth status:*)",
+      "Bash(sudo apt install:*)",
+      "Bash(git config:*)"
     ]
   }
 }

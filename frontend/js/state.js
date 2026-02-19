@@ -22,6 +22,10 @@ export const state = {
         JSON.parse(localStorage.getItem("quickchef-shopping-checked") || "[]")
     ),
 
+    // Quantity scaling
+    mealScales: {},    // e.g. { "Lun-Pranzo": 0.9 } — absent key means 1.0
+    globalScale: 1.0,
+
     // Auth state
     authToken: null,
     currentUser: null,
