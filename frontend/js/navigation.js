@@ -1,8 +1,8 @@
 import { startSlideshow, stopSlideshow } from "./theme.js";
 import { loadManageRecipes, loadPreferenceRecipes } from "./recipes.js";
-import { renderSavedPlans } from "./planner.js";
+import { renderSavedPlansPage } from "./planner.js";
 
-const PAGES = ["landing", "auth", "preferences", "menu", "planner", "add-recipe", "manage-recipes"];
+const PAGES = ["landing", "auth", "preferences", "menu", "planner", "add-recipe", "saved-plans", "manage-recipes"];
 
 export function navigateTo(pageId) {
     if (pageId === "landing") {
@@ -49,8 +49,11 @@ export function navigateTo(pageId) {
         loadManageRecipes();
     }
 
+    if (pageId === "saved-plans") {
+        renderSavedPlansPage();
+    }
+
     if (pageId === "planner") {
-        renderSavedPlans();
         if (window.showTips) window.showTips();
     } else {
         if (window.hideTips) window.hideTips();

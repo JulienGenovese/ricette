@@ -13,9 +13,9 @@ import { renderWizardBreadcrumb, selectChip, wizardNext, wizardPrev, resetWizard
          confirmEdit, closeModal, loadPreferenceRecipes, prefNext, prefPrev,
          skipPreferences } from "./recipes.js";
 import { generatePlan, rescaleAndRender, resetExclusions, toggleCompactView,
-         mobileSwipePrev, mobileSwipeNext, toggleShoppingList, toggleSavedPlans,
+         mobileSwipePrev, mobileSwipeNext, toggleShoppingList,
          savePlanToStorage, exportFile, toggleDropdown, closeDropdowns,
-         renderSavedPlans, renderShoppingList, setupMobileSwipe,
+         renderShoppingList, setupMobileSwipe,
          removeDay, removeMeal, openRecipeDetailModal, closeRecipeDetailModal,
          loadRecipeFiles, toggleRecipeFilesDropdown,
          openGlobalScalePopover } from "./planner.js";
@@ -31,7 +31,7 @@ import { initAuth, loginWithEmail, registerWithEmail, loginWithGoogle,
 Object.assign(window, {
     navigateTo, toggleTheme, generatePlan, rescaleAndRender,
     resetExclusions, toggleCompactView, mobileSwipePrev, mobileSwipeNext,
-    toggleShoppingList, toggleSavedPlans, savePlanToStorage, exportFile,
+    toggleShoppingList, savePlanToStorage, exportFile,
     toggleDropdown, closeDropdowns, selectChip, wizardNext, wizardPrev,
     resetWizard, filterManageRecipes, openEditModal, openDeleteModal,
     confirmDelete, confirmEdit, closeModal, skipPreferences, prefNext, prefPrev,
@@ -52,15 +52,11 @@ document.addEventListener("DOMContentLoaded", () => {
     initTheme();
     startSlideshow(document.getElementById("landing"));
     renderWizardBreadcrumb();
-    renderSavedPlans();
     loadRecipeFiles();
 
     window.addEventListener("resize", () => {
         if (state.lastPlanData) setupMobileSwipe();
     });
 
-    // Auto-start tutorial on first visit
-    if (shouldShowTutorial()) {
-        setTimeout(() => startTutorial(), 800);
-    }
+    // Tutorial can be started manually via the "?" button in the navbar
 });

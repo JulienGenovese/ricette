@@ -79,6 +79,11 @@
 }
 
 .menu-card:nth-child(3) {
+    border-color: rgba(253, 203, 110, 0.5);
+    background: rgba(253, 203, 110, 0.15);
+}
+
+.menu-card:nth-child(4) {
     border-color: rgba(0, 184, 148, 0.5);
     background: rgba(0, 184, 148, 0.15);
 }
@@ -99,6 +104,11 @@
 }
 
 .menu-card:nth-child(3):hover {
+    background: rgba(253, 203, 110, 0.25);
+    border-color: rgba(253, 203, 110, 0.6);
+}
+
+.menu-card:nth-child(4):hover {
     background: rgba(0, 184, 148, 0.25);
     border-color: rgba(0, 184, 148, 0.6);
 }

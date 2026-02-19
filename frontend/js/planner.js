@@ -2,7 +2,7 @@ import { DAYS_ORDER, MEALS_ORDER, SHOPPING_CATEGORIES, SHOPPING_CATEGORY_DEFAULT
 import { state } from "./state.js";
 import { API } from "./api.js";
 import {
-    escapeHtml, formatQty, showLoading, showError, hideError,
+    escapeHtml, formatQty, roundScaledQty, showLoading, showError, hideError,
     showToast, updateExcludedCount, launchConfetti, downloadBlob,
 } from "./helpers.js";
 
@@ -547,7 +547,8 @@ export function openRecipeDetailModal(recipe, numPeople, day, meal) {
             const scaledQty = getScaledQty(ing.quantity, numPeople, day, meal);
             const unit = ing.unit || "";
             if (scaledQty) {
-                return `<li><span class="detail-ing-qty">${formatQty(scaledQty)}${unit}</span> ${escapeHtml(ing.name)}</li>`;
+                const rounded = roundScaledQty(scaledQty, ing.unit);
+                return `<li><span class="detail-ing-qty">${formatQty(rounded)}${unit}</span> ${escapeHtml(ing.name)}</li>`;
             }
             return `<li>${escapeHtml(ing.name)}</li>`;
         });
@@ -738,7 +739,7 @@ function createRecipeCard(recipe, numPeople, day, meal) {
             const scaledQty = getScaledQty(ing.quantity, numPeople, day, meal);
             if (scaledQty) {
                 const unit = ing.unit || "";
-                return `${formatQty(scaledQty)}${unit} ${ing.name}`;
+                return `${formatQty(roundScaledQty(scaledQty, ing.unit))}${unit} ${ing.name}`;
             }
             return ing.name;
         });
@@ -893,7 +894,8 @@ export function renderShoppingList() {
             const scaledQty = item.quantity ? item.quantity * numPeople : null;
             if (scaledQty) {
                 const unit = item.unit || "";
-                text.innerHTML = `<span class="shopping-item-qty">${formatQty(scaledQty)}${unit}</span> ${escapeHtml(item.name)}`;
+                const rounded = roundScaledQty(scaledQty, item.unit);
+                text.innerHTML = `<span class="shopping-item-qty">${formatQty(rounded)}${unit}</span> ${escapeHtml(item.name)}`;
             } else {
                 text.textContent = item.name;
             }
@@ -971,26 +973,6 @@ export async function savePlanToStorage() {
         showToast("Piano salvato in locale!", "success");
     }
 
-    renderSavedPlans();
-
-    // Auto-open, scroll, highlight
-    const container = document.getElementById("saved-plans-container");
-    const icon = document.getElementById("saved-plans-toggle-icon");
-    if (!container.classList.contains("open")) {
-        container.classList.add("open");
-        icon.classList.add("open");
-    }
-
-    setTimeout(() => {
-        const section = document.getElementById("saved-plans-section");
-        section.scrollIntoView({ behavior: "smooth", block: "start" });
-
-        const firstCard = document.querySelector(".saved-plan-card");
-        if (firstCard) {
-            firstCard.classList.add("saved-plan-pulse");
-            setTimeout(() => firstCard.classList.remove("saved-plan-pulse"), 2000);
-        }
-    }, 100);
 }
 
 function loadSavedPlan(id) {
@@ -1116,6 +1098,105 @@ export function toggleSavedPlans() {
     icon.classList.toggle("open");
 }
 
+/* ===== Saved Plans Page ===== */
+
+export async function renderSavedPlansPage() {
+    let plans;
+    if (state.currentUser) {
+        try {
+            plans = await API.getUserPlans();
+        } catch {
+            plans = [];
+        }
+    } else {
+        plans = getSavedPlans();
+    }
+
+    const grid = document.getElementById("saved-plans-page-grid");
+    const emptyEl = document.getElementById("saved-plans-page-empty");
+    if (!grid || !emptyEl) return;
+
+    grid.innerHTML = "";
+
+    if (plans.length === 0) {
+        grid.classList.add("hidden");
+        emptyEl.classList.remove("hidden");
+        return;
+    }
+
+    grid.classList.remove("hidden");
+    emptyEl.classList.add("hidden");
+
+    for (const plan of plans) {
+        const card = document.createElement("div");
+        card.className = "saved-plans-page-card";
+
+        const isCloud = !!state.currentUser;
+        const label = isCloud
+            ? (plan.label || "Piano")
+            : `${plan.date} - ${plan.time}`;
+        const people = isCloud ? (plan.num_people || 2) : (plan.numPeople || 2);
+
+        // Count days and meals for info
+        const planData = isCloud ? plan.plan : (plan.data ? plan.data.plan : null);
+        let dayCount = 0;
+        let mealCount = 0;
+        if (planData) {
+            for (const dayData of Object.values(planData)) {
+                dayCount++;
+                if (dayData.meals) {
+                    for (const mealData of Object.values(dayData.meals)) {
+                        if (mealData.recipes && mealData.recipes.length > 0) mealCount++;
+                    }
+                }
+            }
+        }
+
+        card.innerHTML = `
+            <div class="saved-plans-page-card-header">
+                <span class="saved-plans-page-card-icon">&#128197;</span>
+                <span class="saved-plans-page-card-label">${escapeHtml(label)}</span>
+            </div>
+            <div class="saved-plans-page-card-meta">
+                <span>${people} persone</span>
+                <span>${dayCount} giorni</span>
+                <span>${mealCount} pasti</span>
+            </div>
+        `;
+
+        const actions = document.createElement("div");
+        actions.className = "saved-plans-page-card-actions";
+
+        const loadBtn = document.createElement("button");
+        loadBtn.className = "btn-primary saved-plans-page-load";
+        loadBtn.textContent = "Carica";
+        loadBtn.onclick = (e) => {
+            e.stopPropagation();
+            if (isCloud) {
+                loadCloudPlan(plan);
+            } else {
+                loadSavedPlan(plan.id);
+            }
+            window.navigateTo("planner");
+        };
+
+        const delBtn = document.createElement("button");
+        delBtn.className = "btn-ghost saved-plans-page-delete";
+        delBtn.textContent = "Elimina";
+        delBtn.onclick = async (e) => {
+            e.stopPropagation();
+            await deleteSavedPlan(plan.id, e);
+            renderSavedPlansPage();
+        };
+
+        actions.appendChild(loadBtn);
+        actions.appendChild(delBtn);
+        card.appendChild(actions);
+
+        grid.appendChild(card);
+    }
+}
+
 /* ===== Dropdowns ===== */
 
 export function toggleDropdown(id) {
@@ -1158,7 +1239,9 @@ function getScaledPlanData() {
             for (const recipe of mealData.recipes) {
                 if (!recipe.ingredients) continue;
                 for (const ing of recipe.ingredients) {
-                    if (ing.quantity) ing.quantity *= effectiveScale;
+                    if (ing.quantity) {
+                        ing.quantity = roundScaledQty(ing.quantity * effectiveScale, ing.unit);
+                    }
                 }
             }
         }

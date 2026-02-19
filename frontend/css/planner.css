@@ -1109,3 +1109,121 @@
 :root[data-theme="dark"] .scale-popover-reset {
     background: rgba(255, 255, 255, 0.06);
 }
+
+/* ===== Saved Plans Page ===== */
+.saved-plans-page {
+    min-height: 100vh;
+    position: relative;
+}
+
+.saved-plans-page-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: calc(var(--navbar-height) + 2rem) 1.5rem 3rem;
+    position: relative;
+    z-index: 1;
+}
+
+.saved-plans-page-header {
+    margin-bottom: 2rem;
+}
+
+.saved-plans-page-title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #fff;
+}
+
+.saved-plans-page-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.saved-plans-page-card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    padding: 1.2rem;
+    transition: all 0.2s;
+    animation: fadeInUp 0.4s ease both;
+}
+
+.saved-plans-page-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+}
+
+.saved-plans-page-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.6rem;
+}
+
+.saved-plans-page-card-icon {
+    font-size: 1.5rem;
+}
+
+.saved-plans-page-card-label {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+:root[data-theme="dark"] .saved-plans-page-card-label,
+.saved-plans-page .saved-plans-page-card-label {
+    color: #fff;
+}
+
+.saved-plans-page-card-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 1rem;
+}
+
+.saved-plans-page-card-actions {
+    display: flex;
+    gap: 0.6rem;
+}
+
+.saved-plans-page-load {
+    padding: 0.4rem 1rem;
+    font-size: 0.82rem;
+}
+
+.saved-plans-page-delete {
+    padding: 0.4rem 1rem;
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.saved-plans-page-delete:hover {
+    color: var(--color-primary);
+}
+
+.saved-plans-page-empty {
+    text-align: center;
+    padding: 4rem 1rem;
+}
+
+.saved-plans-page-empty .empty-state-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.saved-plans-page-empty .empty-state-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.5rem;
+}
+
+.saved-plans-page-empty .empty-state-desc {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.6);
+}

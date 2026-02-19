@@ -22,6 +22,9 @@
             <button class="navbar-link" data-page="planner" onclick="navigateTo('planner')">
                 <span class="navbar-link-icon">&#128197;</span> Planner
             </button>
+            <button class="navbar-link" data-page="saved-plans" onclick="navigateTo('saved-plans')">
+                <span class="navbar-link-icon">&#128203;</span> Piani
+            </button>
             <button class="navbar-link" data-page="manage-recipes" onclick="navigateTo('manage-recipes')">
                 <span class="navbar-link-icon">&#128218;</span> Ricette
             </button>
@@ -171,6 +174,10 @@
                 <span class="menu-card-icon">&#10133;</span>
                 <span class="menu-card-label">Aggiungi Ricetta</span>
             </button>
+            <button class="menu-card" onclick="navigateTo('saved-plans')">
+                <span class="menu-card-icon">&#128203;</span>
+                <span class="menu-card-label">Lista Piani</span>
+            </button>
             <button class="menu-card" onclick="navigateTo('manage-recipes')">
                 <span class="menu-card-icon">&#128218;</span>
                 <span class="menu-card-label">Gestisci Ricette</span>
@@ -301,18 +308,6 @@
             </div>
         </div>
 
-        <!-- Saved Plans -->
-        <div id="saved-plans-section" class="saved-plans-section">
-            <button class="shopping-toggle" onclick="toggleSavedPlans()">
-                <span class="shopping-toggle-icon" id="saved-plans-toggle-icon">&#9654;</span>
-                Piani Salvati
-                <span id="saved-plans-count"></span>
-            </button>
-            <div class="shopping-list-container" id="saved-plans-container">
-                <div class="saved-plans-list" id="saved-plans-list"></div>
-            </div>
-        </div>
-
         <footer class="footer">
             <p>QuickChef &mdash; Pasti bilanciati, ogni settimana.</p>
         </footer>
@@ -429,6 +424,28 @@
         </div>
     </div>
 
+    <!-- ========== PAGE: Saved Plans List ========== -->
+    <div id="saved-plans" class="page saved-plans-page hidden">
+        <!-- Background Slideshow -->
+        <div class="bg-slideshow">
+            <div class="bg-slide active"></div>
+            <div class="bg-slide"></div>
+        </div>
+        <div class="bg-overlay"></div>
+
+        <div class="saved-plans-page-container">
+            <div class="saved-plans-page-header">
+                <h1 class="saved-plans-page-title">I Miei Piani</h1>
+            </div>
+            <div class="saved-plans-page-grid" id="saved-plans-page-grid"></div>
+            <div class="saved-plans-page-empty hidden" id="saved-plans-page-empty">
+                <div class="empty-state-icon">&#128203;</div>
+                <div class="empty-state-title">Nessun piano salvato</div>
+                <div class="empty-state-desc">Genera un piano dal Planner e salvalo per ritrovarlo qui.</div>
+            </div>
+        </div>
+    </div>
+
     <!-- ========== PAGE 5: Manage Recipes ========== -->
     <div id="manage-recipes" class="page manage-page hidden">
         <!-- Background Slideshow -->
@@ -462,16 +479,9 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="/firebase-config.js"></script>
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyDVAa6qGNlrg99YHC_tOL3Q0Ob1rnbX_kg",
-            authDomain: "quickchef-487607.firebaseapp.com",
-            projectId: "quickchef-487607",
-            storageBucket: "quickchef-487607.firebasestorage.app",
-            messagingSenderId: "71862243279",
-            appId: "1:71862243279:web:1fe430248e3435ea534cba"
-        };
-        firebase.initializeApp(firebaseConfig);
+        firebase.initializeApp(window.__FIREBASE_CONFIG__);
         window.firebaseAuth = firebase.auth();
     </script>
 

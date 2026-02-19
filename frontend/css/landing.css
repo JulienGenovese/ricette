@@ -3,6 +3,7 @@
     position: fixed;
     inset: 0;
     z-index: -2;
+    background: linear-gradient(135deg, #1a1a2e, #16213e, #0d1b2a);
 }
 
 .bg-slide {
@@ -53,6 +54,7 @@
 .landing-slideshow {
     position: absolute;
     inset: 0;
+    background: linear-gradient(135deg, #1a1a2e, #16213e, #0d1b2a);
 }
 
 .landing-slide {

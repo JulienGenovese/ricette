@@ -19,7 +19,7 @@ const TIPS = [
     {
         icon: "\u{1F6D2}",
         title: "Lista della spesa",
-        text: "Dopo aver generato il piano, espandi la lista della spesa per vedere tutti gli ingredienti necessari.",
+        text: "Espandi la lista della spesa per vedere gli ingredienti raggruppati per categoria. Spunta quelli che hai gi\u00E0!",
     },
     {
         icon: "\u{1F4E6}",
@@ -28,8 +28,8 @@ const TIPS = [
     },
     {
         icon: "\u{1F4BE}",
-        title: "Salva i tuoi piani",
-        text: "Clicca 'Salva Piano' per conservare il piano corrente. Puoi ricaricarlo dalla sezione Piani Salvati.",
+        title: "Salva e ritrova i piani",
+        text: "Clicca 'Salva Piano' per conservarlo. Ritrova tutti i tuoi piani salvati nella sezione 'Lista Piani' dal menu.",
     },
     {
         icon: "\u{1F5D1}",
@@ -54,7 +54,37 @@ const TIPS = [
     {
         icon: "\u{2795}",
         title: "Aggiungi le tue ricette",
-        text: "Vai alla sezione 'Aggiungi' per inserire le tue ricette preferite. Saranno incluse nei piani futuri!",
+        text: "Vai alla sezione 'Aggiungi' per inserire le tue ricette con ingredienti, stagionalit\u00E0 e valori nutrizionali.",
+    },
+    {
+        icon: "\u{2696}",
+        title: "Scala le quantit\u00E0",
+        text: "Usa l'icona bilancia su ogni pasto o il pulsante globale per aumentare o diminuire le dosi in percentuale.",
+    },
+    {
+        icon: "\u{1F4D6}",
+        title: "Scegli i ricettari",
+        text: "Filtra i ricettari dal menu a tendina per generare piani solo con le raccolte che preferisci.",
+    },
+    {
+        icon: "\u{1F50D}",
+        title: "Dettaglio ricetta",
+        text: "Clicca su una ricetta nel piano per vedere ingredienti, quantit\u00E0 scalate e informazioni nutrizionali.",
+    },
+    {
+        icon: "\u{270F}",
+        title: "Gestisci le ricette",
+        text: "Dalla sezione 'Ricette' puoi cercare, modificare o eliminare qualsiasi ricetta. Usa la barra di ricerca!",
+    },
+    {
+        icon: "\u{2601}",
+        title: "Sincronizza nel cloud",
+        text: "Accedi con il tuo account per salvare piani e preferenze nel cloud, accessibili da qualsiasi dispositivo.",
+    },
+    {
+        icon: "\u{1F319}",
+        title: "Tema chiaro / scuro",
+        text: "Premi il pulsante luna nella barra di navigazione per passare al tema scuro (o viceversa).",
     },
 ];
 

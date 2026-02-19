@@ -56,7 +56,20 @@
       "Bash(git push:*)",
       "Bash(gh auth status:*)",
       "Bash(sudo apt install:*)",
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "Bash(git -C /home/julien/Documents/python-proj/ricette remote -v)",
+      "Bash(uv tool install:*)",
+      "Bash(pip install:*)",
+      "Bash(pipx install:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(sudo -n chown:*)",
+      "Bash(UV_PROJECT_ENVIRONMENT=/tmp/quickchef-venv uv sync:*)",
+      "Bash(UV_PROJECT_ENVIRONMENT=/tmp/quickchef-venv uv run:*)",
+      "Bash(UV_PROJECT_ENVIRONMENT=/home/julien/Documents/python-proj/ricette/.venv2 uv run:*)",
+      "Bash(for f in frontend/js/*.js)",
+      "Bash(do echo \"=== $f ===\")",
+      "Bash(done)"
     ]
   }
 }

@@ -12,6 +12,14 @@ export function formatQty(qty) {
     return parseFloat(qty.toFixed(2)).toString();
 }
 
+export function roundScaledQty(qty, unit) {
+    if (qty === null || qty === undefined || qty === 0) return qty;
+    if (unit) {
+        return Math.round(qty / 10) * 10 || Math.round(qty);
+    }
+    return Math.round(qty * 2) / 2 || 0.5;
+}
+
 export function showLoading(visible) {
     const skeleton = document.getElementById("skeleton-loading");
     skeleton.classList.toggle("hidden", !visible);

@@ -173,8 +173,9 @@ function showStep(index) {
 
 function positionStep(s) {
     const el = document.querySelector(s.target);
+    const rect = el ? el.getBoundingClientRect() : null;
     const isHidden = !el || el.classList.contains("hidden") ||
-                     el.offsetParent === null;
+                     (rect.width === 0 && rect.height === 0);
 
     if (isHidden && s.fallback) {
         showFloating(s);
@@ -187,8 +188,6 @@ function positionStep(s) {
         else completeTutorial();
         return;
     }
-
-    const rect = el.getBoundingClientRect();
 
     // Position spotlight
     spotlightEl.style.display = "block";
