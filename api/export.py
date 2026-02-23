@@ -23,9 +23,11 @@ from src.config import (
 # ── Helpers condivisi ─────────────────────────────────────────
 
 
-def scale_quantity(qty: int | None, num_people: int) -> int | None:
-    """Scala una quantita' per il numero di persone."""
-    return qty * num_people if qty else qty
+def scale_quantity(qty: float | int | None, num_people: int) -> int | None:
+    """Scala una quantita' per il numero di persone, arrotondando sempre."""
+    if not qty:
+        return qty
+    return round(qty * num_people)
 
 
 def _iter_plan_rows(plan_data: dict):

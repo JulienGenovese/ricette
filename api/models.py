@@ -19,7 +19,7 @@ class GenerateRequest(BaseModel):
 class IngredientOut(BaseModel):
     """Singolo ingrediente con quantita' scalata per numero di persone."""
     name: str
-    quantity: int | None
+    quantity: float | None
     unit: str | None = None
 
 
@@ -44,7 +44,7 @@ class DayOut(BaseModel):
 class ShoppingItem(BaseModel):
     """Singolo elemento della lista della spesa."""
     name: str
-    quantity: int | None
+    quantity: float | None
     unit: str | None = None
 
 

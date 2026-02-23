@@ -236,7 +236,9 @@ async def export_file(
     handler = EXPORT_HANDLERS[key]
 
     plan_data = body.data.model_dump()
-    buf = handler(plan_data, body.num_people)
+    # Le quantita' sono gia' scalate per num_people dal generate endpoint,
+    # quindi passiamo 1 per evitare il doppio scaling.
+    buf = handler(plan_data, 1)
 
     media = EXPORT_MEDIA_TYPES[export_format.value]
     filename = EXPORT_FILENAMES[key]

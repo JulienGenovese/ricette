@@ -69,7 +69,9 @@
       "Bash(UV_PROJECT_ENVIRONMENT=/home/julien/Documents/python-proj/ricette/.venv2 uv run:*)",
       "Bash(for f in frontend/js/*.js)",
       "Bash(do echo \"=== $f ===\")",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(uv run)",
+      "Bash(tail:)"
     ]
   }
 }
